@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# results
+results/
+
+# VS Code
+.vscode/
+
+# Conda / venv
+.venv/

@@ -1,0 +1,9 @@
+pandas==2.3.3
+numpy==1.26.4
+openpyxl==3.1.5
+
+sb-arch-opt
+sb-arch-opt[arch_sbo]
+
+psutil==7.0.0
+gmsh==4.15
