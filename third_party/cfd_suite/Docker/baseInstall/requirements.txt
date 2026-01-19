@@ -1,0 +1,10 @@
+Flask
+Redis
+numpy
+matplotlib
+PyFoam==0.6.6
+numpy-stl
+deap
+scipy
+ipython
+jupyter

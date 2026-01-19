@@ -1,0 +1,16 @@
+[CaseInfo]
+boundary = wall symPlane a1 a0
+internal = LBo22 LBo21 LBo20 LBo12 LBo11 LBo10 LBu12 LBu11 LBu10 Y2Z07 Y2Z06 Y2Z05 Y2Z04 Y2Z03 Y2Z02 Y2Z01 Y2Z00 Y1Z15 Y1Z14 Y1Z13 Y1Z12 Y1Z11 Y1Z10 Y1Z09 Y1Z08 Y1Z07 Y1Z06 Y1Z05 Y1Z04 Y1Z03 Y1Z02 Y1Z01 Y1Z00 Y0Z15 Y0Z14 Y0Z13 Y0Z12 Y0Z11 Y0Z10 Y0Z09 Y0Z08 Y0Z07 Y0Z06 Y0Z05 Y0Z04 Y0Z03 Y0Z02 Y0Z01 Y0Z00 wNE
+path = TestCase/
+
+[Benchmark]
+cfdsrv02 = 1099|32|35168
+cfdsrv01 = 2086|32|66752
+
+[CoarserMeshing]
+refinementlevels = 5 
+pointinmesh = 8 0 2
+
+[ServerInfo]
+servernames = (cfdsrv01|ncusr|ncusr|data)
+

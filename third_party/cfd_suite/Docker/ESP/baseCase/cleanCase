@@ -1,0 +1,3 @@
+foamListTimes -processor -rm
+foamListTimes -rm
+rm -rf postProcessing

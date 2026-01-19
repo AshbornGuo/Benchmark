@@ -1,0 +1,62 @@
+site_name: SBArchOpt
+site_url: https://sbarchopt.readthedocs.io/
+repo_url: https://github.com/jbussemaker/SBArchOpt
+docs_dir: docs
+copyright: © 2024, Deutsches Zentrum für Luft- und Raumfahrt e.V.
+theme:
+  name: material
+  logo: icon.png
+  favicon: icon.png
+  palette:
+    scheme: default
+    primary: custom
+  features:
+    - navigation.tabs
+  custom_dir: docs/overrides
+extra_css:
+  - style.css
+
+nav:
+  - 'Overview': index.md
+  - Optimization:
+    - 'pymoo': 'algo/pymoo.md'
+    - 'ArchSBO': 'algo/arch_sbo.md'
+    - 'BoTorch (Ax)': 'algo/botorch.md'
+    - 'Trieste': 'algo/trieste.md'
+    - 'HEBO': 'algo/hebo.md'
+    - 'SEGOMOE': 'algo/segomoe.md'
+    - 'SMARTy': 'algo/smarty.md'
+  - Tutorials:
+      - SBArchOpt: tutorial.ipynb
+  - 'Test Problems': 'test_problems.md'
+  - API Reference:
+    - Problem Definition: 'api/problem.md'
+    - pymoo: 'api/pymoo.md'
+    - ArchSBO: 'api/arch_sbo.md'
+    - 'BoTorch (Ax)': 'api/botorch.md'
+    - 'Trieste': 'api/trieste.md'
+    - 'HEBO': 'api/hebo.md'
+    - 'SEGOMOE': 'api/segomoe.md'
+    - 'SMARTy': 'api/smarty.md'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - mkdocs-jupyter
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            allow_inspection: true
+            show_root_heading: true
+            show_source: false
+            show_bases: false
+            show_signature_annotations: true
+            merge_init_into_class: true
