@@ -1,0 +1,2 @@
+cylindricalInletVelocityFvPatchVectorField_mine.C
+LIB = $(FOAM_USER_LIBBIN)/libcustominletPatchField

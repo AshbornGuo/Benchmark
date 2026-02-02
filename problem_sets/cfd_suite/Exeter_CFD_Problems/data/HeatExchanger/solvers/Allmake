@@ -1,0 +1,5 @@
+#!/bin/sh
+
+wmake heatedFoam
+wmake calcPressureDifference
+wmake calcTempteratureDifference

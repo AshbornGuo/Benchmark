@@ -1,0 +1,133 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+      /*  solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-6;
+        relTol          0;*/
+        solver          GAMG;
+        tolerance       1e-09;
+        relTol          0.1;
+        smoother        GaussSeidel;
+        nPreSweeps      0;
+        nPostSweeps     2;
+        cacheAgglomeration on;
+        agglomerator    faceAreaPair;
+        nCellsInCoarsestLevel 10;
+        mergeLevels     1;
+    }
+    p_rgh
+    {
+        solver           GAMG;
+        tolerance        1e-7;
+        relTol           0.01;
+
+        smoother         DICGaussSeidel;
+
+        cacheAgglomeration true;
+        nCellsInCoarsestLevel 10;
+        agglomerator     faceAreaPair;
+        mergeLevels      1;
+    }
+    pFinal
+    {
+        $p;
+        tolerance       1e-06;
+        relTol          0;
+    }
+    e
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-06;
+        relTol          0.1;
+    }
+    "(U|h|nuTilda)"
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        nSweeps         2;
+        tolerance       1e-05;
+        relTol          0.01;
+    }
+    "(k|omega)"
+    {
+        $U;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+    T 
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        nSweeps         2;
+        tolerance       1e-05;
+        relTol          0.01;
+    };
+    /*"(U|k|omega|h|nuTilda)"
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        tolerance       1e-05;
+        relTol          0;
+    }*/
+}
+
+SIMPLE
+{
+    momentumPredictor no;
+    nNonOrthogonalCorrectors 0;
+    pRefCell        0;
+    pRefValue       0;
+    nNonOrthogonalCorrectors 0;
+    rhoMin          rhoMin [1 -3 0 0 0] 0.5;
+    rhoMax          rhoMax [1 -3 0 0 0] 1.5;
+    transonic       no;
+    residualControl
+    {
+        p               1e-5;
+        U               1e-5;
+        e               1e-3;
+        "(k|epsilon|omega)" 1e-5;
+    }
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+        U               0.7;
+        rho             1;
+    }
+    equations
+    {
+        U               0.7;
+        k               0.7;
+        omega         0.7;
+        epsilon         0.7;
+        R               0.7;
+        nuTilda         0.7;
+    }
+}
+
+
+// ************************************************************************* //

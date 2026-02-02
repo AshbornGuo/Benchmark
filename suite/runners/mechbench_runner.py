@@ -4,7 +4,7 @@ from suite.utils import save_result, Timer
 
 # 这里改成你本地MECHBench源码所在目录（相对 run_all.py）
 # MECHBENCH_DIR = "third_party/MECHBench"
-MECHBENCH_DIR = r"C:/Users/guoji\Desktop/graduate project/codes\benchmarks/MECHBench/MECHBench"
+MECHBENCH_DIR = r"C:/Users/guoji\Desktop/graduate project/codes/benchmarks/MECHBench/MECHBench"
 
 
 def run_mechbench(suite, problem, algo, seed, budget, **kwargs):
