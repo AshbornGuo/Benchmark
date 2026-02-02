@@ -118,9 +118,6 @@ fea_std = fea_runs.std(axis=0)
 # print(hv_mean)
 
 # plot
-
-
-
 T = len(hv_mean)
 x = np.arange(1, T + 1) * step
 
