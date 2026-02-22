@@ -852,7 +852,8 @@ class OptiProblem(ABC):
         working_dir = os.path.join(os.getcwd(), dir_name)
         # load simulation result dataframe and make it cleaner
         output_file_path = os.path.join(working_dir, self.output_file_name)
-        self.output_data_frame = pd.read_csv(output_file_path)
+        # self.output_data_frame = pd.read_csv(output_file_path)
+        self.output_data_frame = pd.read_csv(output_file_path, encoding="latin1")
         self.output_data_frame.columns = self.output_data_frame.columns.str.replace(' ', '')
         
         # update problem id again

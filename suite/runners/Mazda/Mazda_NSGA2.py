@@ -2,7 +2,6 @@ import os
 import shutil
 import time
 import subprocess
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import traceback
@@ -12,17 +11,21 @@ from pymoo.core.problem import ElementwiseProblem
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
-
+from pymoo.core.callback import Callback
 
 random_seed = 335
 population_size = 50
-num_eval = 5000
+num_eval = 1000
 
 # Paths 
 PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx" # constraint file
 PATH_EXE   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
 PATH_DV   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/pop_vars_eval.txt"
+
 PATH_RESULT   = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2"
+
+os.makedirs(PATH_RESULT, exist_ok=True)
+
 LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_NSGA2_seed{random_seed}.csv")
 
 def dv_range(df_path) -> list:
@@ -61,6 +64,21 @@ def run_exe(exe_path, input_txt, output_dir):
     subprocess.run([exe_path, output_dir], check=True)
 
 
+class MyCallback(Callback):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._t_last = None
+        self.data["gen_time"] = []
+
+    def notify(self, algorithm):
+        now = time.perf_counter()
+        if self._t_last is None:
+            self.data["gen_time"].append(0.0)
+        else:
+            self.data["gen_time"].append(now - self._t_last)
+        self._t_last = now
+
 class Mazda_mop(ElementwiseProblem):
 
     def __init__(self):
@@ -83,9 +101,8 @@ class Mazda_mop(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
 
-        t0 = time.perf_counter() 
+        # t0 = time.perf_counter() 
 
-        # 记录 exe 段时间用的占位
         t2 = None
         t3 = None
 
@@ -137,13 +154,8 @@ class Mazda_mop(ElementwiseProblem):
             out["F"] = np.array([1e6, 1e6], dtype=float)
             out["G"] = np.ones(54, dtype=float) * 1e6
 
-        t1 = time.perf_counter()
-        algo_time = t1 - t0
         eval_time = (t3 - t2) if (t2 is not None and t3 is not None) else None
 
-        if not hasattr(self, "algo_times"):
-            self.algo_times = []
-        self.algo_times.append(algo_time)
 
         if not hasattr(self, "eval_times"):
             self.eval_times = []
@@ -154,7 +166,8 @@ class Mazda_mop(ElementwiseProblem):
 
         with open(LOG_CSV, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter=";")
-            writer.writerow([objs,is_feasible,vars,cons,algo_time,eval_time,])
+            writer.writerow([objs,is_feasible,vars,cons,eval_time,])
+
 
 
 # get value ranges of the decision variables
@@ -170,7 +183,6 @@ columns = [
     "is_feasible",
     "variables",
     "constraints",
-    "algorithm_time",
     "evaluation_time",
 ]
 
@@ -182,9 +194,14 @@ res = minimize(
     algorithm,
     termination=('n_eval', num_eval),
     seed=random_seed,
+    callback=MyCallback(),
     verbose=True
 )
 
-
-
-
+gen_time = res.algorithm.callback.data["gen_time"]
+df = pd.DataFrame({"gen_time": gen_time})
+df.to_csv(
+    os.path.join(PATH_RESULT, f"Mazda_NSGA2_gentime{random_seed}.csv"),
+    index=False,
+    sep=";"
+)

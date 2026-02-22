@@ -12,12 +12,14 @@ from pymoo.core.problem import ElementwiseProblem
 from pymoo.algorithms.moo.moead import MOEAD
 from pymoo.optimize import minimize
 from pymoo.util.ref_dirs import get_reference_directions
+from pymoo.core.callback import Callback
 
 
-random_seed = 331
-population_size = 50
+random_seed = 335
+population_size = 100
 num_eval = 5000
-penalty=5e2
+penalty=1e2
+
 
 # Paths 
 PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx" # constraint file
@@ -60,6 +62,21 @@ def run_exe(exe_path, input_txt, output_dir):
     shutil.copyfile(input_txt, os.path.join(output_dir, "pop_vars_eval.txt"))
 
     subprocess.run([exe_path, output_dir], check=True)
+
+class MyCallback(Callback):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._t_last = None
+        self.data["gen_time"] = []
+
+    def notify(self, algorithm):
+        now = time.perf_counter()
+        if self._t_last is None:
+            self.data["gen_time"].append(0.0)
+        else:
+            self.data["gen_time"].append(now - self._t_last)
+        self._t_last = now
 
 
 class Mazda_mop(ElementwiseProblem):
@@ -158,6 +175,7 @@ class Mazda_mop(ElementwiseProblem):
 
         with open(LOG_CSV, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter=";")
+            # The penalty wont affect the objectives in CSV
             writer.writerow([objs,is_feasible,vars,cons,algo_time,eval_time,])
 
 from pymoo.core.problem import Problem
@@ -221,14 +239,7 @@ columns = [
 df = pd.DataFrame(columns=columns)
 df.to_csv(LOG_CSV, index=False, sep=";")
 
-# res = minimize(
-#     problem,
-#     algorithm,
-#     termination=('n_eval', num_eval),
-#     seed=random_seed,
-#     verbose=True
-# )
-# problem_pen = ConstraintsAsPenalty(problem, penalty=100.0)
+
 problem_pen = ConstraintsAsPenaltyMOO(problem, penalty)
 
 
@@ -237,8 +248,16 @@ res = minimize(
     algorithm,
     termination=('n_eval', num_eval),
     seed=random_seed,
+    callback=MyCallback(),
     verbose=True
 )
 
 
 
+gen_time = res.algorithm.callback.data["gen_time"]
+df = pd.DataFrame({"gen_time": gen_time})
+df.to_csv(
+    os.path.join(PATH_RESULT, f"Mazda_MOEAD_gentime{random_seed}.csv"),
+    index=False,
+    sep=";"
+)

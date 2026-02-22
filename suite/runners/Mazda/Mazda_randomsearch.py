@@ -6,14 +6,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[2]  
-# ↑ 根据你 runner 脚本的位置，可能是 parents[1] 或 parents[2]
 
-RESULT_DIR = BASE_DIR / "results" / "mazda" / "random_search"
-
-
-
-num_evaluation = 5000
+num_evaluation = 1000
 seed = 335
 rng = np.random.default_rng(seed)
 
@@ -22,6 +16,8 @@ PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface
 PATH_EXE   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
 PATH_DV   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/pop_vars_eval.txt"
 PATH_RESULT   = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search"
+
+os.makedirs(PATH_RESULT, exist_ok=True)
 
 def dv_range(df_path) -> list:
     """
@@ -137,6 +133,8 @@ for i in range(num_evaluation):
         "evaluation_time": t_eval,
     }
 
+
+RESULT_DIR = Path(PATH_RESULT)   
 RESULT_DIR.mkdir(parents=True, exist_ok=True)
 out_file = RESULT_DIR / f"Mazda_randomsearch_seed{seed}.csv"
 df.to_csv(out_file, index=False, sep=";")

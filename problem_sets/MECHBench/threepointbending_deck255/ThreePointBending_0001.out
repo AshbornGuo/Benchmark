@@ -27,7 +27,7 @@
  COMPUTATION HARDWARE DESCRIPTION
   
  HOSTNAME     CPU TYPE, FREQUENCY AND MEMORY
- Jialiang   13th Gen Intel(R) Core(TM) i7-13700H (x86_64), 2900 MHz,   3498 MB RAM,  32935 MB swap
+ Jialiang   13th Gen Intel(R) Core(TM) i7-13700H (x86_64), 2900 MHz,   3562 MB RAM,  32935 MB swap
   
  STACKSIZE  . . . . . . . . . . . . . . . . . . . . 1430 MB
  THREAD STACKSIZE . . . . . . . . . . . . . . . . . 400 MB
@@ -169,7 +169,7 @@
  
  19/01/2026
    CYCLE    TIME      TIME-STEP  ELEMENT          ERROR  I-ENERGY    K-ENERGY T  K-ENERGY R  EXT-WORK     MAS.ERR     TOTAL MASS  MASS ADDED
-       0   0.000      0.1470E-05 SHELL       3103   0.0%   0.000      0.4300E+07   0.000       0.000       0.000      0.8964E-01   0.000    
+       0   0.000      0.1470E-05 SHELL       8255   0.0%   0.000      0.4300E+07   0.000       0.000       0.000      0.8964E-01   0.000    
      ANIMATION FILE: ThreePointBendingA001 WRITTEN
      ANIMATION FILE: ThreePointBendingA002 WRITTEN
      ANIMATION FILE: ThreePointBendingA003 WRITTEN
@@ -328,20 +328,20 @@
                         ** SUMMARY **
   
  #PROC  CONTSORT  CONTFOR   ELEMENT   KINCOND   INTEG     IO        T0        ASM       RESOL    
-   1   .1094E+02 .1755E+02 .8016E+02 .5000E+01 .1083E+02 .2594E+01 .0000E+00 .9734E+01 .1430E+03
+   1   .1156E+02 .1847E+02 .7423E+02 .4812E+01 .8938E+01 .2859E+01 .0000E+00 .1020E+02 .1378E+03
   
  
                    ** CUMULATIVE CPU TIME SUMMARY **
   
- CONTACT SORTING.............: .1094E+02     7.65 % 
- CONTACT FORCES..............: .1755E+02    12.27 % 
- .. INCLUDING CONTACT NORMALS: .1116E+02     7.80 % 
- ELEMENT FORCES..............: .8016E+02    56.06 % 
- KINEMATIC COND..............: .5000E+01     3.50 % 
- INTEGRATION.................: .1083E+02     7.57 % 
- ASSEMBLING..................: .9734E+01     6.81 % 
- OTHERS (including I/O)......: .8781E+01     6.14 % 
- TOTAL.......................: .1430E+03   100.00 % 
+ CONTACT SORTING.............: .1156E+02     8.39 % 
+ CONTACT FORCES..............: .1847E+02    13.40 % 
+ .. INCLUDING CONTACT NORMALS: .1162E+02     8.44 % 
+ ELEMENT FORCES..............: .7423E+02    53.87 % 
+ KINEMATIC COND..............: .4812E+01     3.49 % 
+ INTEGRATION.................: .8938E+01     6.49 % 
+ ASSEMBLING..................: .1020E+02     7.40 % 
+ OTHERS (including I/O)......: .9578E+01     6.95 % 
+ TOTAL.......................: .1378E+03   100.00 % 
   
   
                            ** ELAPSED TIME **
@@ -350,14 +350,14 @@
                         ** SUMMARY **
   
  #PROC  CONTSORT  CONTFOR   ELEMENT   KINCOND   INTEG     IO        T0        ASM       RESOL    
-   1   .8432E+01 .1385E+02 .2110E+02 .3915E+01 .5593E+01 .4085E+01 .3796E+00 .8363E+01 .6948E+02
+   1   .8359E+01 .1378E+02 .2095E+02 .3920E+01 .5771E+01 .4026E+01 .3764E+00 .8395E+01 .6933E+02
   
                    ** MEMORY USAGE STATISTICS **
   
- TOTAL MEMORY USED .........................:       89 MB
- MAXIMUM MEMORY PER PROCESSOR...............:       89 MB
- MINIMUM MEMORY PER PROCESSOR...............:       89 MB
- AVERAGE MEMORY PER PROCESSOR...............:       89 MB
+ TOTAL MEMORY USED .........................:       85 MB
+ MAXIMUM MEMORY PER PROCESSOR...............:       85 MB
+ MINIMUM MEMORY PER PROCESSOR...............:       85 MB
+ AVERAGE MEMORY PER PROCESSOR...............:       85 MB
   
                    ** DISK USAGE STATISTICS **
   
@@ -368,10 +368,10 @@
                    ** COMPUTE TIME INFORMATION **
                         ** CURRENT ENGINE **
   
- EXECUTION STARTED .........................:      2026/01/19  18:35:24
- EXECUTION COMPLETED .......................:      2026/01/19  18:36:34
+ EXECUTION STARTED .........................:      2026/01/19  18:39:22
+ EXECUTION COMPLETED .......................:      2026/01/19  18:40:32
   
- ELAPSED TIME     =         69.53 s
+ ELAPSED TIME     =         69.37 s
                           0:01:09
 
 
@@ -385,8 +385,8 @@
   
                    ** COMPUTE RUNTIME INFORMATION SUMMARY **
   
-        STARTER RUNTIME =          0.59s (00:00:00)
- # 001   ENGINE RUNTIME =         69.53s (00:01:09)
+        STARTER RUNTIME =          0.56s (00:00:00)
+ # 001   ENGINE RUNTIME =         69.37s (00:01:09)
  ------------------------------ 
- STARTER+ENGINE RUNTIME =         70.11s (00:01:10)
+ STARTER+ENGINE RUNTIME =         69.93s (00:01:09)
   

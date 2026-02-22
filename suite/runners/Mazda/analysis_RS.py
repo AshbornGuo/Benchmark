@@ -1,11 +1,4 @@
 
-# 找一个SBO算法
-
-#turbofan 实现一样的
-
-#论文找构建一个多目标问题Mech
-
-#linux系统
 
 import pandas as pd
 import numpy as np

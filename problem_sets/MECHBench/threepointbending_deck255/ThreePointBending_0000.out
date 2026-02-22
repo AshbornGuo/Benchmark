@@ -24,7 +24,7 @@
  COMPUTATION HARDWARE DESCRIPTION
   
  HOSTNAME     CPU TYPE, FREQUENCY AND MEMORY
- Jialiang   13th Gen Intel(R) Core(TM) i7-13700H (x86_64), 2900 MHz,   3531 MB RAM,  32935 MB swap
+ Jialiang   13th Gen Intel(R) Core(TM) i7-13700H (x86_64), 2900 MHz,   3542 MB RAM,  32935 MB swap
   
  STACKSIZE  . . . . . . . . . . . . . . . . . . . . 1430 MB
  THREAD STACKSIZE . . . . . . . . . . . . . . . . . 400 MB
@@ -1243,10 +1243,10 @@ Part id,name:      3001 SURFACE_3_PRIME        Mat type:  44 Elm type: SHELL-4no
   
                    ** COMPUTE TIME INFORMATION **
   
- EXECUTION STARTED      :      2026/01/19  18:35:24
- EXECUTION COMPLETED    :      2026/01/19  18:35:24
+ EXECUTION STARTED      :      2026/01/19  18:39:22
+ EXECUTION COMPLETED    :      2026/01/19  18:39:22
   
- ELAPSED TIME...........=          0.59 s
+ ELAPSED TIME...........=          0.56 s
                                00:00:00
   
 ------------------------------------------------------------------------
