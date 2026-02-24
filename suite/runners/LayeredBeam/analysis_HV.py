@@ -1,0 +1,172 @@
+from pathlib import Path
+import pandas as pd
+import numpy as np
+import ast
+from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
+from pymoo.indicators.hv import HV
+import matplotlib.pyplot as plt
+
+PROJECT_ROOT = Path.cwd()
+
+BASE_DIR = PROJECT_ROOT / "results" / "LayeredBeam"
+
+# =========================
+# 你现在的归一化范围（先沿用）
+# =========================
+F1_MAX = 4.691520000000004
+F1_MIN = 2.5315200000000093
+F2_MAX = 13.638929999999998
+F2_MIN = -2.499999999999873
+
+REF_POINT = np.array([1.1, 1.1])
+
+
+def read_res(path_result: Path) -> np.ndarray:
+    df = pd.read_csv(path_result, sep=";")
+
+    objs_list = df["objectives"].map(ast.literal_eval)
+    F = np.vstack(objs_list.to_numpy())
+
+    f1 = F[:, 0]
+    f2 = F[:, 1]
+
+    f1_nor = (f1 - F1_MIN) / (F1_MAX - F1_MIN)
+    f2_nor = (f2 - F2_MIN) / (F2_MAX - F2_MIN)
+
+    return np.column_stack([f1_nor, f2_nor])  # (N, 2)
+
+
+def hypervolume(F: np.ndarray) -> float:
+    if F is None or len(F) == 0:
+        return 0.0
+
+    front0_idx = NonDominatedSorting().do(F)[0]
+    F_nd = F[front0_idx]
+
+    return HV(ref_point=REF_POINT).do(F_nd)
+
+
+def hv_analysis(F: np.ndarray, step: int = 50) -> np.ndarray:
+    hv_list = []
+    for i in range(step, len(F) + 1, step):
+        hv_list.append(hypervolume(F[:i]))
+    return np.array(hv_list, dtype=float)
+
+
+def pad_to_same_length(runs: list[np.ndarray], pad_value=np.nan) -> np.ndarray:
+    """不同 run 的评估次数可能不同：用 NaN 补齐，后面用 nanmean/nanstd。"""
+    max_len = max(len(r) for r in runs)
+    out = np.full((len(runs), max_len), pad_value, dtype=float)
+    for k, r in enumerate(runs):
+        out[k, :len(r)] = r
+    return out
+
+
+def compute_algo_hv_stats(csv_paths: list[Path], step: int) -> tuple[np.ndarray, np.ndarray]:
+    """输入某算法多个 seed CSV，输出 mean/std 曲线（按 step 聚合）。"""
+    hv_runs = []
+    for p in csv_paths:
+        F = read_res(p)
+        hv_curve = hv_analysis(F, step=step)
+        hv_runs.append(hv_curve)
+
+    hv_mat = pad_to_same_length(hv_runs, pad_value=np.nan)  # (n_runs, T_max)
+    hv_mean = np.nanmean(hv_mat, axis=0)
+    hv_std = np.nanstd(hv_mat, axis=0)
+    return hv_mean, hv_std
+
+
+# =========================
+# 在这里把“不同算法”的 CSV 路径都列出来
+# 每个算法：一个 list，里面放多个 seeds 的 CSV
+# =========================
+ALGO_CSVS = {
+    "RandomSearch": [
+        BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed331.csv",
+        BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed332.csv",
+        BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed333.csv",
+    ],
+
+    "NSGA2": [
+        BASE_DIR / "NSGA2" / "LayeredBeam_NSGA2_seed331.csv",
+        BASE_DIR / "NSGA2" / "LayeredBeam_NSGA2_seed332.csv",
+        BASE_DIR / "NSGA2" / "LayeredBeam_NSGA2_seed333.csv",
+    ],
+    
+    "MOEAD": [
+        BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_seed331.csv",
+        BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_seed332.csv",
+        BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_seed333.csv",
+    ],
+
+    "SMSEMOA": [
+        BASE_DIR / "SMSEMOA" / "LayeredBeam_SMSEMOA_seed331.csv",
+        BASE_DIR / "SMSEMOA" / "LayeredBeam_SMSEMOA_seed332.csv",
+        BASE_DIR / "SMSEMOA" / "LayeredBeam_SMSEMOA_seed333.csv",
+    ],
+
+    "EHVI": [
+        BASE_DIR / "qLogNEHVI" / "LayeredBeam_qLogNEHVI_seed331.csv",
+        BASE_DIR / "qLogNEHVI" / "LayeredBeam_qLogNEHVI_seed332.csv",
+        BASE_DIR / "qLogNEHVI" / "LayeredBeam_qLogNEHVI_seed333.csv",
+    ],
+
+    "ParEGO": [
+        BASE_DIR / "qLogNParEGO" / "LayeredBeam_qLogNParEGO_seed331.csv",
+        BASE_DIR / "qLogNParEGO" / "LayeredBeam_qLogNParEGO_seed332.csv",
+        BASE_DIR / "qLogNParEGO" / "LayeredBeam_qLogNParEGO_seed333.csv",
+    ],
+
+    "MESMO": [
+        BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed331.csv",
+        BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed332.csv",
+        BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed333.csv",
+    ],
+
+}
+
+# 你原来 step=1 也可以，但会很慢（每次都做一次 NDS + HV）
+step = 1
+
+# =========================
+# 计算并画在一张图里
+# =========================
+plt.figure(figsize=(7, 4.5))
+
+global_max_T = 0
+stats = {}
+
+for algo_name, paths in ALGO_CSVS.items():
+    # 防呆：路径不存在就直接报清楚
+    missing = [p for p in paths if not p.exists()]
+    if missing:
+        raise FileNotFoundError(f"[{algo_name}] Missing CSVs:\n" + "\n".join(map(str, missing)))
+
+    mean, std = compute_algo_hv_stats(paths, step=step)
+    stats[algo_name] = (mean, std)
+    global_max_T = max(global_max_T, len(mean))
+
+# x 轴统一到最长的那个（短的曲线只画到它自己的长度）
+for algo_name, (hv_mean, hv_std) in stats.items():
+    T = len(hv_mean)
+    x = np.arange(1, T + 1) * step
+
+    hv_lower = np.maximum(hv_mean - hv_std, 0.0)
+    hv_upper = hv_mean + hv_std
+
+    plt.plot(x, hv_mean, label=f"{algo_name} (mean)")
+    plt.fill_between(x, hv_lower, hv_upper, alpha=0.20)
+
+plt.xlabel("Evaluations")
+plt.ylabel("Hypervolume")
+plt.title("Hypervolume vs Evaluations (Multiple Algorithms)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+out_path = BASE_DIR / "randomsearch"/ "HV_all_algorithms.png"
+out_path.parent.mkdir(parents=True, exist_ok=True)
+plt.savefig(out_path, dpi=300, bbox_inches="tight")
+plt.close()
+
+print(f"Saved: {out_path}")

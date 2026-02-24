@@ -32,6 +32,7 @@ def read_res(PATH_RESULT):
 
     # 1) 把字符串 "[...]" 安全解析成 Python list
     objs_list = df["objectives"].map(ast.literal_eval)
+    
 
     # 2) 变成 (N, D) 的 ndarray
     F = np.vstack(objs_list.to_numpy())
@@ -139,4 +140,88 @@ plt.savefig("results/LayeredBeam/NSGA2/HV_curve.png", dpi=300, bbox_inches="tigh
 plt.close()
 
 
+
+# ============================
+# 追加：用“原始 objectives 数值”画非支配分层 + Pareto front 连线
+# ============================
+
+def read_res_raw(PATH_RESULT):
+    """
+    读取 CSV 并返回原始目标值（非归一化），仅取前两个目标
+    return: F_raw shape (N,2)
+    """
+    df = pd.read_csv(PATH_RESULT, sep=";")
+    objs_list = df["objectives"].map(ast.literal_eval)
+    F = np.vstack(objs_list.to_numpy())
+    F_raw = F[:, :2]
+    return F_raw
+
+
+def get_fronts(F):
+    """
+    返回非支配排序的所有 fronts（分层结果）
+    fronts: list of index arrays, fronts[0] 是最优层
+    """
+    if F is None or len(F) == 0:
+        return []
+    fronts = NonDominatedSorting().do(F)  # list of arrays
+    return fronts
+
+
+def plot_nd_layers_with_connected_front0(F, title, save_path, max_fronts=None):
+    """
+    画所有非支配层（分层区分颜色），并把第0层按 f1 排序后连线
+    - F: 原始目标值 (N,2)
+    - max_fronts: 限制最多画前几层（None 表示全画）
+    """
+    fronts = get_fronts(F)
+    if len(fronts) == 0:
+        return
+
+    n_fronts = len(fronts) if max_fronts is None else min(len(fronts), max_fronts)
+
+    plt.figure(figsize=(6, 4))
+
+    # 用离散 colormap 区分层数（层数多也能区分开）
+    cmap = plt.cm.get_cmap("tab20", n_fronts)
+
+    # 逐层画点：每一层不同颜色
+    for k in range(n_fronts):
+        idx = fronts[k]
+        Fk = F[idx]
+        plt.scatter(Fk[:, 0], Fk[:, 1], s=18, alpha=0.85, color=cmap(k), label=f"Front {k}")
+
+
+    # 第0层连线（最优层）
+    front0 = fronts[0]
+    F0 = F[front0]
+    if len(F0) > 0:
+        order = np.argsort(F0[:, 0])   # 按 f1 排序
+        F0_line = F0[order]
+        plt.plot(F0_line[:, 0], F0_line[:, 1], linewidth=1.8, label="Front 0 connected")
+
+    plt.xlabel("f1 (raw)")
+    plt.ylabel("f2 (raw)")
+    plt.title(title)
+    plt.grid(True)
+    plt.legend(ncol=2, fontsize=8)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+# --- 读取原始目标值（非归一化） ---
+
+Front = 5
+
+Fraw_NSGA2_331 = read_res_raw(PATH_NSGA2_331)
+
+
+# --- 分别画每个 seed 的分层 Pareto（第0层连线） ---
+plot_nd_layers_with_connected_front0(
+    Fraw_NSGA2_331,
+    title="Pareto_front_NSGA2_331",
+    save_path="results/LayeredBeam/NSGA2/Pareto_front_NSGA2_331.png",
+    max_fronts=Front  # 想只画前K层就填整数，例如 8
+)
 

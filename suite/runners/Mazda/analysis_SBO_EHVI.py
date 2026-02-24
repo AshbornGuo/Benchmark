@@ -115,10 +115,6 @@ fea_runs = [fea_SBO_EHVI_331, fea_SBO_EHVI_332, fea_SBO_EHVI_333, fea_SBO_EHVI_3
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)
-# print(hv_mean)
-
-# plot
-
 
 
 T = len(hv_mean)
@@ -177,3 +173,5 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig("results/mazda/SBO_EHVI/HV_curve.png", dpi=300, bbox_inches="tight")
 plt.close()
+
+
