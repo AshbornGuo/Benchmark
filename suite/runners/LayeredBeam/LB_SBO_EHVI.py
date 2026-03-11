@@ -6,7 +6,7 @@ from pathlib import Path
 import csv
 import uuid
 import numpy as np
-
+import os
 
 import torch
 
@@ -38,7 +38,7 @@ from src import sob
 
 # 1) Global config 全局参数设置（预算、维度、并行数）
 
-seed = 331
+seed = 333
 rng = np.random.default_rng(seed)
 torch.manual_seed(seed)
 

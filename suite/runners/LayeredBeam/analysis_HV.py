@@ -126,7 +126,7 @@ ALGO_CSVS = {
 }
 
 # 你原来 step=1 也可以，但会很慢（每次都做一次 NDS + HV）
-step = 1
+step = 5
 
 # =========================
 # 计算并画在一张图里
@@ -170,3 +170,65 @@ plt.savefig(out_path, dpi=300, bbox_inches="tight")
 plt.close()
 
 print(f"Saved: {out_path}")
+
+
+
+#############
+def export_hv_table(start_eval=55, end_eval=500, step=5):
+    if start_eval % step != 0 or end_eval % step != 0:
+        raise ValueError("start_eval 和 end_eval 必须能被 step 整除。")
+
+    eval_axis = np.arange(start_eval, end_eval + 1, step)
+    result = {"eval_axis": eval_axis}
+
+    for algo_name, paths in ALGO_CSVS.items():
+
+        missing = [p for p in paths if not p.exists()]
+        if missing:
+            raise FileNotFoundError(f"[{algo_name}] Missing CSVs:\n" + "\n".join(map(str, missing)))
+
+        hv_runs = []
+
+        for p in paths:
+            F = read_res(p)
+
+            hv_curve = hv_analysis(F, step=step)
+
+            hv_sample = []
+            for e in eval_axis:
+                idx = e // step - 1
+                if idx < len(hv_curve):
+                    hv_sample.append(hv_curve[idx])
+                else:
+                    hv_sample.append(np.nan)
+
+            hv_runs.append(hv_sample)
+
+        hv_runs = np.array(hv_runs, dtype=float)
+        hv_mean = np.nanmean(hv_runs, axis=0)
+
+        result[algo_name] = hv_mean
+
+    df = pd.DataFrame(result)
+
+    column_order = [
+        "eval_axis",
+        "EHVI",
+        "ParEGO",
+        "MESMO",
+        "NSGA2",
+        "MOEAD",
+        "SMSEMOA",
+        "RandomSearch"
+    ]
+
+    df = df[column_order]
+
+    out_csv = BASE_DIR / "HV_all.csv"
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv, index=False)
+
+    print(f"Saved: {out_csv}")
+
+
+export_hv_table(start_eval=55, end_eval=500, step=5)

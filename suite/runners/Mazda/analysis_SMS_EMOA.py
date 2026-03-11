@@ -1,3 +1,5 @@
+
+
 import pandas as pd
 import numpy as np
 import ast
@@ -5,31 +7,34 @@ from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from pymoo.indicators.hv import HV
 import matplotlib.pyplot as plt
 
-# read csv to get reuslts of algorithms  
+# read csv to get reuslts of algorithms  SMS-EMOA
 
-PATH_SMS_EMOA_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMS_EMOA_seed331.csv"
-PATH_SMS_EMOA_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMS_EMOA_seed332.csv"
-PATH_SMS_EMOA_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMS_EMOA_seed333.csv"
-PATH_SMS_EMOA_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMS_EMOA_seed334.csv"
-PATH_SMS_EMOA_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMS_EMOA_seed335.csv"
+PATH_SMS_EMOA_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed331.csv"
+PATH_SMS_EMOA_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed332.csv"
+PATH_SMS_EMOA_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed333.csv"
+PATH_SMS_EMOA_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed334.csv"
+PATH_SMS_EMOA_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed335.csv"
+
 
 
 def read_res(PATH_RESULT):
     # read the results CSV file
     df = pd.read_csv(PATH_RESULT,sep = ";")
 
+    # 1) 把字符串 "[...]" 安全解析成 Python list
     objs_list = df["objectives"].map(ast.literal_eval)
     cons_list = df["is_feasible"]
 
+    # 2) 变成 (N, D) 的 ndarray
     F = np.vstack(objs_list.to_numpy())
 
-
+    # 3) 取前两个目标
     f1 = F[:, 0]
     f2 = F[:, 1]
 
     # normalized
-    f1_nor = f1 - 2.0                     
-    f2_nor = f2 / 74.0                    
+    f1_nor = f1 - 2.0                     # = f1 - 2.0
+    f2_nor = f2 / 74.0                    #  对应 common_parts/74，越大越好
 
     F_nor = np.column_stack([f1_nor, f2_nor])   # shape: (N, 2)
 
@@ -111,12 +116,18 @@ fea_runs = [fea_SMS_EMOA_331, fea_SMS_EMOA_332, fea_SMS_EMOA_333, fea_SMS_EMOA_3
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)
-
+# print(hv_mean)
 
 # plot
+
+
+
 T = len(hv_mean)
 x = np.arange(1, T + 1) * step
 
+
+
+## Mean Feasible Ratio
 plt.figure(figsize=(6, 4))
 
 plt.plot(x, fea_mean, label="Mean Feasible Ratio", color="C1")
@@ -167,3 +178,9 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig("results/mazda/SMS_EMOA/HV_curve.png", dpi=300, bbox_inches="tight")
 plt.close()
+
+
+
+
+
+
