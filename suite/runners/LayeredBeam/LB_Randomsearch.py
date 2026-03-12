@@ -22,7 +22,7 @@ import random
 import multiprocessing as mp
 
 # fix random seed
-seed = 333
+seed = 331
 random.seed(seed)  
 
 # build_runner_options()
@@ -105,12 +105,36 @@ if __name__ == "__main__": # 主入口（只在主进程执行，防止子进程
     low, high = -5, 5
     max_workers = 5
    
-    # generate 1000 candidate solutions randomly
+
+    t0_rs = time.perf_counter()
     vectors = [
         [random.uniform(low, high) for _ in range(dim)]
-        for _ in range(num*max_workers)
+        for _ in range(num * max_workers)
     ]
+    t1_rs = time.perf_counter()
 
+    rs_algorithm_time = t1_rs - t0_rs
+    print(f"RS algorithm time (sampling only): {rs_algorithm_time:.6f} s")
+
+    # 每5次评估对应的平均RS算法时间
+    rs_time_per_5_evals = rs_algorithm_time / num
+
+    # 写入CSV
+    rs_time_csv = os.path.join(PATH_RESULT, f"LayeredBeam_RS_algtime_seed{seed}.csv")
+
+    rows = []
+    for i in range(1, num + 1):
+        rows.append({
+            # "batch": i,
+            "evaluations": i * max_workers,
+            "algorithm_time": rs_time_per_5_evals
+        })
+
+    df_rs_time = pd.DataFrame(rows)
+    df_rs_time.to_csv(rs_time_csv, index=False)
+
+
+###################################
     t0_all = time.perf_counter()
 
     # 至少要保证同一次内的5个进程的sim_id必须不同
