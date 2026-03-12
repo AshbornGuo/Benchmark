@@ -87,6 +87,12 @@ ALGO_CSVS = {
         BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed333.csv",
     ],
 
+    "EGBO": [
+        BASE_DIR / "EGBO" / "LayeredBeam_EGBO_seed331.csv",
+        BASE_DIR / "EGBO" / "LayeredBeam_EGBO_seed332.csv",
+        BASE_DIR / "EGBO" / "LayeredBeam_EGBO_seed333.csv",
+    ],
+
     "NSGA2": [
         BASE_DIR / "NSGA2" / "LayeredBeam_NSGA2_seed331.csv",
         BASE_DIR / "NSGA2" / "LayeredBeam_NSGA2_seed332.csv",
@@ -164,7 +170,7 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 
-out_path = BASE_DIR / "randomsearch"/ "HV_all_algorithms.png"
+out_path = BASE_DIR /  "HV_all.png"
 out_path.parent.mkdir(parents=True, exist_ok=True)
 plt.savefig(out_path, dpi=300, bbox_inches="tight")
 plt.close()
@@ -219,6 +225,7 @@ def export_hv_table(start_eval=55, end_eval=500, step=5):
         "NSGA2",
         "MOEAD",
         "SMSEMOA",
+        "EGBO",
         "RandomSearch"
     ]
 

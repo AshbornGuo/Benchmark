@@ -9,7 +9,7 @@ import matplotlib as mpl
 # =====================
 BASE_DIR = Path.cwd() / "results" / "LayeredBeam"
 
-results_df = pd.read_csv(BASE_DIR / "eval_time_budget_HV_results.csv")
+results_df = pd.read_csv(BASE_DIR / "eval_time_budget_HV.csv")
 hv_df = pd.read_csv(BASE_DIR / "HV_all.csv")
 
 # =====================
@@ -40,12 +40,13 @@ algo_names = sorted(best_df["algo"].unique())
 marker_map = {
     "RandomSearch": "o",
     "NSGA2": "s",
-    "MOEAD": "^",
+    "MOEAD": "P",
     "SMSEMOA": "D",
-    "EHVI": "P",
-    "ParEGO": "v",
-    "MESMO": "<",
-    # "EHVI": ">",
+
+    "EHVI": "^",
+    "ParEGO": "*",
+    "MESMO": "1",
+    "EGBO": ".",
 }
 default_marker = "X"
 
@@ -116,4 +117,11 @@ for h in leg.legend_handles:
         pass
 
 plt.subplots_adjust(left=0.10, right=0.86, top=0.90, bottom=0.25)
+
+# Save figure
+# =====================
+save_path = BASE_DIR / "eval_time_budget_HV.png"
+plt.savefig(save_path, dpi=300, bbox_inches="tight")
+
+print(f"Figure saved to: {save_path}")
 plt.show()

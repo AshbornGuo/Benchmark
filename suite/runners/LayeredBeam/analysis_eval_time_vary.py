@@ -6,8 +6,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib as mpl
+
 
 # =====================
 # Paths
@@ -132,7 +131,7 @@ for algo in algo_names:
 
 results_df = pd.DataFrame(results)
 
-results_df.to_csv(BASE_DIR / "eval_time_budget_HV_results.csv", index=False)
+results_df.to_csv(BASE_DIR / "eval_time_budget_HV.csv", index=False)
 
 
 

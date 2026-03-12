@@ -41,6 +41,10 @@ PATH_MESMO_331 = RESULT_DIR / "MESMO" / "LayeredBeam_MESMO_seed331.csv"
 PATH_MESMO_332 = RESULT_DIR / "MESMO" / "LayeredBeam_MESMO_seed332.csv"
 PATH_MESMO_333 = RESULT_DIR / "MESMO" / "LayeredBeam_MESMO_seed333.csv"
 
+PATH_EGBO_331 = RESULT_DIR / "EGBO" / "LayeredBeam_EGBO_seed331.csv"
+PATH_EGBO_332 = RESULT_DIR / "EGBO" / "LayeredBeam_EGBO_seed332.csv"
+PATH_EGBO_333 = RESULT_DIR / "EGBO" / "LayeredBeam_EGBO_seed333.csv"
+
 
 
 def read_res(PATH_RESULT):
@@ -73,6 +77,7 @@ alg_list = [PATH_RS_331, PATH_RS_332, PATH_RS_333,
             PATH_EHVI_331, PATH_EHVI_332, PATH_EHVI_333,
             PATH_ParEGO_331, PATH_ParEGO_332, PATH_ParEGO_333,
             PATH_MESMO_331, PATH_MESMO_332, PATH_MESMO_333,
+            PATH_EGBO_331, PATH_EGBO_332, PATH_EGBO_333,
             
         ]
 

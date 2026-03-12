@@ -143,6 +143,13 @@ def compute_randomsearch_time_stats(
 
 
 SBO_CSVS = {
+
+    "EGBO": [
+            BASE_DIR / "EGBO" / "LayeredBeam_EGBO_seed331.csv",
+            BASE_DIR / "EGBO" / "LayeredBeam_EGBO_seed332.csv",
+            BASE_DIR / "EGBO" / "LayeredBeam_EGBO_seed333.csv",
+        ],
+
     "EHVI": [
         BASE_DIR / "qLogNEHVI" / "LayeredBeam_qLogNEHVI_seed331.csv",
         BASE_DIR / "qLogNEHVI" / "LayeredBeam_qLogNEHVI_seed332.csv",
@@ -197,6 +204,7 @@ EA_CSVS = {
             BASE_DIR / "SMSEMOA" / "LayeredBeam_SMSEMOA_gentime333.csv",
         ],
     },
+
     "RandomSearch": {
         "seed": [
             BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed331.csv",
@@ -204,6 +212,8 @@ EA_CSVS = {
             BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed333.csv",
         ],
     },
+
+
 }
 
 start_row = 55
@@ -276,7 +286,7 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 
-out_path = BASE_DIR / "randomsearch" / "alg_time_curve2.png"
+out_path = BASE_DIR /  "alg_time_all.png"
 out_path.parent.mkdir(parents=True, exist_ok=True)
 plt.savefig(out_path, dpi=300, bbox_inches="tight")
 plt.close()
