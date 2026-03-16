@@ -9,11 +9,10 @@ import matplotlib.pyplot as plt
 
 # read csv to get reuslts of algorithms  
 
-PATH_SBO_ParEGO_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_ParEGO/Mazda_SBO_ParEGO_seed331.csv"
-PATH_SBO_ParEGO_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_ParEGO/Mazda_SBO_ParEGO_seed332.csv"
-PATH_SBO_ParEGO_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_ParEGO/Mazda_SBO_ParEGO_seed333.csv"
-PATH_SBO_ParEGO_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_ParEGO/Mazda_SBO_ParEGO_seed334.csv"
-PATH_SBO_ParEGO_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_ParEGO/Mazda_SBO_ParEGO_seed335.csv"
+PATH_SBO_ParEGO_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/qLogNParEGO/Mazda_qLogNParEGO_seed331.csv"
+PATH_SBO_ParEGO_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/qLogNParEGO/Mazda_qLogNParEGO_seed332.csv"
+PATH_SBO_ParEGO_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/qLogNParEGO/Mazda_qLogNParEGO_seed333.csv"
+
 
 
 def read_res(PATH_RESULT):
@@ -87,31 +86,28 @@ step = 50
 cons_SBO_ParEGO_331, Fnor_SBO_ParEGO_331 = read_res(PATH_SBO_ParEGO_331)
 cons_SBO_ParEGO_332, Fnor_SBO_ParEGO_332 = read_res(PATH_SBO_ParEGO_332)
 cons_SBO_ParEGO_333, Fnor_SBO_ParEGO_333 = read_res(PATH_SBO_ParEGO_333)
-cons_SBO_ParEGO_334, Fnor_SBO_ParEGO_334 = read_res(PATH_SBO_ParEGO_334)
-cons_SBO_ParEGO_335, Fnor_SBO_ParEGO_335 = read_res(PATH_SBO_ParEGO_335)
+
 
 # feasible rate
 fea_SBO_ParEGO_331 = feas_ratio(cons_SBO_ParEGO_331,step)
 fea_SBO_ParEGO_332 = feas_ratio(cons_SBO_ParEGO_332,step)
 fea_SBO_ParEGO_333 = feas_ratio(cons_SBO_ParEGO_333,step)
-fea_SBO_ParEGO_334 = feas_ratio(cons_SBO_ParEGO_334,step)
-fea_SBO_ParEGO_335 = feas_ratio(cons_SBO_ParEGO_335,step)
+
 
 # hypervolume
 hv_SBO_ParEGO_331 = hv_analysis(Fnor_SBO_ParEGO_331, cons_SBO_ParEGO_331,step)
 hv_SBO_ParEGO_332 = hv_analysis(Fnor_SBO_ParEGO_332, cons_SBO_ParEGO_332,step)
 hv_SBO_ParEGO_333 = hv_analysis(Fnor_SBO_ParEGO_333, cons_SBO_ParEGO_333,step)
-hv_SBO_ParEGO_334 = hv_analysis(Fnor_SBO_ParEGO_334, cons_SBO_ParEGO_334,step)
-hv_SBO_ParEGO_335 = hv_analysis(Fnor_SBO_ParEGO_335, cons_SBO_ParEGO_335,step)
+
 
 # take average
-hv_runs = [hv_SBO_ParEGO_331, hv_SBO_ParEGO_332, hv_SBO_ParEGO_333, hv_SBO_ParEGO_334, hv_SBO_ParEGO_335]  # 每个是长度 T 的 list
+hv_runs = [hv_SBO_ParEGO_331, hv_SBO_ParEGO_332, hv_SBO_ParEGO_333]  # 每个是长度 T 的 list
 hv_runs = np.array(hv_runs)   # shape: (5, T)
 hv_mean = hv_runs.mean(axis=0)
 hv_std = hv_runs.std(axis=0)
 
 
-fea_runs = [fea_SBO_ParEGO_331, fea_SBO_ParEGO_332, fea_SBO_ParEGO_333, fea_SBO_ParEGO_334, fea_SBO_ParEGO_335]  # 每个是长度 T 的 list
+fea_runs = [fea_SBO_ParEGO_331, fea_SBO_ParEGO_332, fea_SBO_ParEGO_333]  # 每个是长度 T 的 list
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)
@@ -148,7 +144,7 @@ plt.grid(True)
 
 plt.tight_layout()
 # plt.show()
-plt.savefig("results/mazda/SBO_ParEGO/Feasible_ratio_curve.png", dpi=300, bbox_inches="tight")
+plt.savefig("results/mazda/qLogNParEGO/Feasible_ratio_curve.png", dpi=300, bbox_inches="tight")
 plt.close()
 
 
@@ -175,5 +171,5 @@ plt.legend()
 plt.grid(True)
 
 plt.tight_layout()
-plt.savefig("results/mazda/SBO_ParEGO/HV_curve.png", dpi=300, bbox_inches="tight")
+plt.savefig("results/mazda/qLogNParEGO/HV_curve.png", dpi=300, bbox_inches="tight")
 plt.close()

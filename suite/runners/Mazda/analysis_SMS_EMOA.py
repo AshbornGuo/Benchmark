@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 PATH_SMS_EMOA_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed331.csv"
 PATH_SMS_EMOA_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed332.csv"
 PATH_SMS_EMOA_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed333.csv"
-PATH_SMS_EMOA_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed334.csv"
-PATH_SMS_EMOA_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed335.csv"
+# PATH_SMS_EMOA_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed334.csv"
+# PATH_SMS_EMOA_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA/Mazda_SMSEMOA_seed335.csv"
 
 
 
@@ -88,31 +88,31 @@ step = 50
 cons_SMS_EMOA_331, Fnor_SMS_EMOA_331 = read_res(PATH_SMS_EMOA_331)
 cons_SMS_EMOA_332, Fnor_SMS_EMOA_332 = read_res(PATH_SMS_EMOA_332)
 cons_SMS_EMOA_333, Fnor_SMS_EMOA_333 = read_res(PATH_SMS_EMOA_333)
-cons_SMS_EMOA_334, Fnor_SMS_EMOA_334 = read_res(PATH_SMS_EMOA_334)
-cons_SMS_EMOA_335, Fnor_SMS_EMOA_335 = read_res(PATH_SMS_EMOA_335)
+# cons_SMS_EMOA_334, Fnor_SMS_EMOA_334 = read_res(PATH_SMS_EMOA_334)
+# cons_SMS_EMOA_335, Fnor_SMS_EMOA_335 = read_res(PATH_SMS_EMOA_335)
 
 # feasible rate
 fea_SMS_EMOA_331 = feas_ratio(cons_SMS_EMOA_331,step)
 fea_SMS_EMOA_332 = feas_ratio(cons_SMS_EMOA_332,step)
 fea_SMS_EMOA_333 = feas_ratio(cons_SMS_EMOA_333,step)
-fea_SMS_EMOA_334 = feas_ratio(cons_SMS_EMOA_334,step)
-fea_SMS_EMOA_335 = feas_ratio(cons_SMS_EMOA_335,step)
+# fea_SMS_EMOA_334 = feas_ratio(cons_SMS_EMOA_334,step)
+# fea_SMS_EMOA_335 = feas_ratio(cons_SMS_EMOA_335,step)
 
 # hypervolume
 hv_SMS_EMOA_331 = hv_analysis(Fnor_SMS_EMOA_331, cons_SMS_EMOA_331,step)
 hv_SMS_EMOA_332 = hv_analysis(Fnor_SMS_EMOA_332, cons_SMS_EMOA_332,step)
 hv_SMS_EMOA_333 = hv_analysis(Fnor_SMS_EMOA_333, cons_SMS_EMOA_333,step)
-hv_SMS_EMOA_334 = hv_analysis(Fnor_SMS_EMOA_334, cons_SMS_EMOA_334,step)
-hv_SMS_EMOA_335 = hv_analysis(Fnor_SMS_EMOA_335, cons_SMS_EMOA_335,step)
+# hv_SMS_EMOA_334 = hv_analysis(Fnor_SMS_EMOA_334, cons_SMS_EMOA_334,step)
+# hv_SMS_EMOA_335 = hv_analysis(Fnor_SMS_EMOA_335, cons_SMS_EMOA_335,step)
 
 # take average
-hv_runs = [hv_SMS_EMOA_331, hv_SMS_EMOA_332, hv_SMS_EMOA_333, hv_SMS_EMOA_334, hv_SMS_EMOA_335]  # 每个是长度 T 的 list
+hv_runs = [hv_SMS_EMOA_331, hv_SMS_EMOA_332, hv_SMS_EMOA_333]  # 每个是长度 T 的 list
 hv_runs = np.array(hv_runs)   # shape: (5, T)
 hv_mean = hv_runs.mean(axis=0)
 hv_std = hv_runs.std(axis=0)
 
 
-fea_runs = [fea_SMS_EMOA_331, fea_SMS_EMOA_332, fea_SMS_EMOA_333, fea_SMS_EMOA_334, fea_SMS_EMOA_335]  # 每个是长度 T 的 list
+fea_runs = [fea_SMS_EMOA_331, fea_SMS_EMOA_332, fea_SMS_EMOA_333]  # 每个是长度 T 的 list
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)

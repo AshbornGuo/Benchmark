@@ -17,9 +17,9 @@ from pymoo.core.callback import Callback
 from pymoo.parallelization.joblib import JoblibParallelization
 
 
-random_seed = 335
+random_seed = 333
 population_size = 50
-num_eval = 2000
+num_eval = 1500
 
 PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
 PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"

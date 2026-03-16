@@ -30,12 +30,12 @@ from joblib import Parallel, delayed
 # =========================
 # User Settings
 # =========================
-seed = 331
+seed = 333
 rng = np.random.default_rng(seed)
 torch.manual_seed(seed)
 
 # Budget + batching
-TOTAL_BUDGET = 2000
+TOTAL_BUDGET = 1500
 num_random_sample = 50
 
 N_JOBS = 5                 # parallel exe evaluations
@@ -53,10 +53,10 @@ ACQ_MAXITER = 100
 # Paths
 PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
 PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
-PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI_PAR_CONT"
+PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI"
 
 os.makedirs(PATH_RESULT, exist_ok=True)
-LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_qLogNEHVI_cont_seed{seed}.csv")
+LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_qLogNEHVI_seed{seed}.csv")
 
 # Per-eval isolated workdirs (parallel-safe)
 RUN_ROOT = Path(PATH_RESULT) / "runs" / "MAZDA_SBO_CONT"

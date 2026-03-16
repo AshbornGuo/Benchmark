@@ -83,11 +83,14 @@ def read_ea_algorithm_time(path_seed: Path, path_gen: Path) -> np.ndarray:
     return np.array(result)
 
 
-def read_randomsearch_algorithm_time(path_seed: Path, start_row: int = 55, step: int = 5) -> np.ndarray:
-    seed_df = pd.read_csv(path_seed, sep=";")
-    n_eval = len(seed_df)
-    x = np.arange(start_row, n_eval + 1, step)
-    return np.zeros(len(x), dtype=float)
+def read_randomsearch_algorithm_time(path_time: Path, start_row: int = 55, step: int = 5) -> np.ndarray:
+    df = pd.read_csv(path_time)
+
+    evals = df["evaluations"].astype(int).to_numpy()
+    times = df["algorithm_time"].astype(float).to_numpy()
+
+    mask = evals >= start_row
+    return times[mask]
 
 
 def pad_to_same_length(runs: list[np.ndarray], pad_value=np.nan) -> np.ndarray:
@@ -127,13 +130,13 @@ def compute_ea_time_stats(seed_paths: list[Path], gen_paths: list[Path]) -> tupl
 
 
 def compute_randomsearch_time_stats(
-    seed_paths: list[Path],
+    time_paths: list[Path],
     start_row: int = 55,
     step: int = 5
 ) -> tuple[np.ndarray, np.ndarray]:
     time_runs = []
-    for seed_p in seed_paths:
-        t = read_randomsearch_algorithm_time(seed_p, start_row=start_row, step=step)
+    for p in time_paths:
+        t = read_randomsearch_algorithm_time(p, start_row=start_row, step=step)
         time_runs.append(t)
 
     time_mat = pad_to_same_length(time_runs, pad_value=np.nan)
@@ -211,6 +214,13 @@ EA_CSVS = {
             BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed332.csv",
             BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed333.csv",
         ],
+
+        "time": [
+        BASE_DIR / "randomsearch" / "LayeredBeam_RS_algtime_seed331.csv",
+        BASE_DIR / "randomsearch" / "LayeredBeam_RS_algtime_seed332.csv",
+        BASE_DIR / "randomsearch" / "LayeredBeam_RS_algtime_seed333.csv",
+
+        ],
     },
 
 
@@ -234,19 +244,18 @@ for algo_name, paths in SBO_CSVS.items():
 
 # EA
 for algo_name, files in EA_CSVS.items():
-    seed_paths = files["seed"]
+    seed_paths = files.get("seed", [])
     gen_paths = files.get("gen", [])
+    time_paths = files.get("time", [])
 
-    missing = [p for p in seed_paths + gen_paths if not p.exists()]
+    missing = [p for p in seed_paths + gen_paths + time_paths if not p.exists()]
     if missing:
         raise FileNotFoundError(f"[{algo_name}] Missing CSVs:\n" + "\n".join(map(str, missing)))
 
     if algo_name == "MOEAD":
         mean, std = compute_moead_time_stats(seed_paths, gen_paths)
-
     elif algo_name == "RandomSearch":
-        mean, std = compute_randomsearch_time_stats(seed_paths, start_row=start_row, step=sample_step)
-        
+        mean, std = compute_randomsearch_time_stats(time_paths, start_row=start_row, step=sample_step)
     else:
         mean, std = compute_ea_time_stats(seed_paths, gen_paths)
 
@@ -272,19 +281,34 @@ for algo_name, (time_mean, time_std) in stats.items():
     T = len(time_mean)
     x = np.arange(start_row, start_row + T * sample_step, sample_step)
 
-    eps = 1e-4
+    eps = 1e-8
     time_mean_plot = np.maximum(time_mean, eps)
     lower = np.maximum(time_mean - time_std, eps)
     upper = np.maximum(time_mean + time_std, eps)
 
-    plt.plot(x, time_mean_plot, label=f"{algo_name} (mean)")
+    plt.plot(x, time_mean_plot, label=f"{algo_name}")
     plt.fill_between(x, lower, upper, alpha=0.20)
 
 plt.yscale("log")
 plt.xlabel("Evaluations")
 plt.ylabel("Algorithm Time (s)")
-plt.title("Algorithm Time vs Evaluations (Multiple Algorithms)")
-plt.legend()
+plt.title("Algorithm Time Comparison")
+# plt.legend()
+
+# plt.legend(
+#     loc="center left",
+#     bbox_to_anchor=(1.02, 0.5),
+#     frameon=True
+# )
+
+plt.legend(
+    loc="upper center",
+    bbox_to_anchor=(0.5, -0.15),   # 往图下方移动
+    ncol=4,                        # 一行放 4 个，可自己调
+    frameon=True
+)
+
+
 plt.grid(True)
 plt.tight_layout()
 

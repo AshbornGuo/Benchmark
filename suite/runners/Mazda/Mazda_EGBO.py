@@ -85,7 +85,7 @@ if not os.path.exists(LOG_CSV):
         writer = csv.writer(f, delimiter=";")
         writer.writerow([
             "eval_id",
-            "objectives_original",
+            "objectives",
             "objectives_maxspace",
             "is_feasible",
             "variables",

@@ -1,100 +1,103 @@
 import os
-import shutil
 import time
+import shutil
 import subprocess
+from pathlib import Path
+import csv
+import uuid
 import numpy as np
 import pandas as pd
-import csv
 
 import torch
-from botorch.fit import fit_gpytorch_mll
-from botorch.optim import optimize_acqf_discrete
-from pymoo.indicators.hv import HV
+from joblib import Parallel, delayed
 
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
-import warnings
-from botorch.exceptions import InputDataWarning
-
+from botorch.optim import optimize_acqf
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective.max_value_entropy_search import (
     qLowerBoundMultiObjectiveMaxValueEntropySearch,
 )
-from botorch.utils.multi_objective.box_decompositions.non_dominated import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.dominated import DominatedPartitioning
+from botorch.utils.multi_objective.pareto import is_non_dominated
 
+from torch.distributions import Normal
+
+import warnings
+from botorch.exceptions import InputDataWarning
 warnings.filterwarnings("ignore", category=InputDataWarning)
 
-seed = 331
+
+# -------------------------
+# 1) Global config
+# -------------------------
+seed = 332
 rng = np.random.default_rng(seed)
+torch.manual_seed(seed)
 
-# 初始只生成了num_random_sample = 20个候选点，这个是要进黑盒评估的。
-# 但是之后的每一轮都生成K = 512个，这个只需要在gp里筛选，然后算出最好的q=BATCH_SIZE=1个进行黑盒评估
-# K = 512   
-num_random_sample = 50
-K = 200  
-T = 1000 - 50  
-BATCH_SIZE = 1
+num_eval = 1500
+n_init = 50
+n_jobs = 5
+mc_samples = 64
+dtype = torch.double
+device = torch.device("cpu")
 
-# Paths 
-PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx" # constraint file
-PATH_EXE   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
-PATH_DV   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/pop_vars_eval.txt"
-PATH_RESULT   = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_MESMO"
+num_restarts = 5
+raw_samples = 128
+maxiter = 100
+
+PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
+PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+RUN_ROOT = SCRIPT_DIR / "runs" / "Mazda"
+
+PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/MESMO"
 os.makedirs(PATH_RESULT, exist_ok=True)
 
-LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_SBO_MESMO_seed{seed}.csv")
-
-if not os.path.exists(LOG_CSV):
-    with open(LOG_CSV, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter=";")
-        writer.writerow([
-            "objectives",
-            "is_feasible",
-            "variables",
-            "constraints",
-            "evaluation_time",
-            "algorithm_time",
-        ])
+LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_MESMO_seed{seed}.csv")
 
 
-
+# -------------------------
+# 2) Mazda helpers
+# -------------------------
 def dv_range(df_path) -> list:
-    """
-    retrieve the domain of the decision variable
-
-    """
-
-    dicision_variable = pd.read_excel(df_path)
+    decision_variable = pd.read_excel(df_path)
     volume_lists = []
-    for _, row in dicision_variable.iterrows():
-        # retriet dv and its values
+
+    for _, row in decision_variable.iterrows():
         dv = row["Design Variable"]
         volume_str = row["Discrete Volume"]
 
-        # check and skill null rows
         if pd.isna(dv) or pd.isna(volume_str):
             continue
-    
-        # all possible values of a dv
-        values = [float(v.strip()) for v in volume_str.split(",")]
-        # values of all 222 dv
+
+        values = [float(v.strip()) for v in str(volume_str).split(",")]
         volume_lists.append(values)
 
-    return volume_lists 
+    return volume_lists
+
+
+DV_RANGES = dv_range(PATH_CON)
+dim = len(DV_RANGES)
+
+lb = torch.tensor([min(v) for v in DV_RANGES], dtype=dtype, device=device)
+ub = torch.tensor([max(v) for v in DV_RANGES], dtype=dtype, device=device)
+rng_ = (ub - lb).clamp_min(1e-12)
 
 
 def run_exe(exe_path, input_txt, output_dir, timeout=60):
-    """
-    run the Mazda .exe evaluation 
-
-    """
     os.makedirs(output_dir, exist_ok=True)
     shutil.copyfile(input_txt, os.path.join(output_dir, "pop_vars_eval.txt"))
     subprocess.run([exe_path, output_dir], check=True, timeout=timeout)
 
+
 def read_eval_files(path_result):
-    file_dv  = os.path.join(path_result, "pop_vars_eval.txt")
+    file_dv = os.path.join(path_result, "pop_vars_eval.txt")
     file_obj = os.path.join(path_result, "pop_objs_eval.txt")
     file_con = os.path.join(path_result, "pop_cons_eval.txt")
 
@@ -108,246 +111,284 @@ def read_eval_files(path_result):
     return objs, dvs, cons
 
 
-# 计算约束违反量
 def calc_cv_from_con_raw(con_raw_list):
-    """
-    Mazda: con >= 0 feasible
-    cv = sum(max(0, -con))  # 违反量
-    feasible => cv = 0
-    """
-    c = torch.tensor(con_raw_list, dtype=torch.float32)
-    # 把原始约束变负，则原来不满足条件的约束的负值变为正，并求和，得到一个符号为正的约束违反量
+    c = torch.tensor(con_raw_list, dtype=torch.double)
     return torch.clamp(-c, min=0.0).sum().item()
 
-def eval_vars_one(path_exe, path_dv, path_result, vars_one):
-    """
-    """
-    # 1) write dv
-    with open(path_dv, "w") as f:
-        f.write("\t".join(map(str, vars_one)) + "\n")
 
-    # 2) run exe
+# -------------------------
+# 3) Black-box evaluation
+# -------------------------
+def run_one_sim(sim_id: int, vector):
+    workdir = RUN_ROOT / f"sim_{sim_id}"
+    workdir.mkdir(parents=True, exist_ok=True)
+
+    input_txt = workdir / "input_vars.txt"
+
+    with open(input_txt, "w") as f:
+        f.write("\t".join(map(str, vector)) + "\n")
+
     t0 = time.perf_counter()
-    run_exe(path_exe, path_dv, path_result)
+    run_exe(PATH_EXE, str(input_txt), str(workdir))
+    obj_original, dvs, con_raw = read_eval_files(str(workdir))
     t1 = time.perf_counter()
+
     eval_time = t1 - t0
-
-    # 3) read outputs (objs, dvs, cons)
-    obj_original, _, con_raw = read_eval_files(path_result)
-
-    # 4) transform objectives to "max" space (你原来的规则)
-    f1_hv = obj_original[0] - 2.0
-    f2_hv = obj_original[1] / 74.0
-    y_obj = [-f1_hv, -f2_hv]
-
-    # 5) 得到一个正的约束违反量
-    cv = calc_cv_from_con_raw(con_raw)
-
-    # 6) feasibility
-    is_feasible = all(x >= 0 for x in con_raw)
-
-    return y_obj, cv, obj_original, con_raw, is_feasible, eval_time
+    return obj_original, con_raw, eval_time
 
 
-# 生成初始样本_运行exe_返回结果_保存txt
-def ini_sample(path_exe, path_dv, path_result, dv_ranges) -> tuple[list[float], bool, list[float], list[float], float]:
-    # random sample a vars vector
-    sampled = [rng.choice(values) for values in dv_ranges]
+def eval_one_x(x_np: np.ndarray):
+    sim_id = 255 + (uuid.uuid4().int % 1_000_000)
+    x_list = x_np.tolist()
 
-    # evaluate it
-    _, _, obj_original, con_raw, is_feasible, eval_time = eval_vars_one(
-        path_exe, path_dv, path_result, sampled
+    obj_original, con_raw, eval_time = run_one_sim(sim_id, x_list)
+
+    f1 = float(obj_original[0])
+    f2 = float(obj_original[1])
+
+    f1_hv = f1 - 2.0
+    f2_hv = f2 / 74.0
+
+    y = np.array([-f1_hv, -f2_hv], dtype=np.double)
+
+    cv = float(calc_cv_from_con_raw(con_raw))
+    is_feasible = (cv <= 1e-12)
+
+    return {
+        "sim_id": sim_id,
+        "x": x_list,
+        "objs_original": [f1, f2],
+        "con_raw": list(map(float, con_raw)),
+        "cv": cv,
+        "is_feasible": is_feasible,
+        "y_max": y.tolist(),
+        "eval_time": float(eval_time),
+    }
+
+
+def eval_batch(X_np: np.ndarray, n_jobs: int):
+    results = Parallel(n_jobs=n_jobs, backend="loky")(
+        delayed(eval_one_x)(X_np[i]) for i in range(X_np.shape[0])
     )
-
-    # 这里如果你还想在 ini_sample 内写 log（可以保留）
-    alg_time = None
-    with open(LOG_CSV, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter=";")
-        writer.writerow([obj_original, is_feasible, sampled, con_raw, eval_time, alg_time])
-
-    # 你 pre_processing 里需要的是 obj_original / var / con_raw / eval_time
-    return obj_original, is_feasible, sampled, con_raw, eval_time
+    return results
 
 
-
-
-
-# 归一化目标函数_改为max方向_构造约束违反量
-def pre_processing(path_exe, path_dv, path_result, dv, num):
-    cons_raw, vars_list = [], []
-    objs_max, cvs = [], []
-
-    for _ in range(num):
-        obj_original, _, dv_vals, con_raw, _ = ini_sample(path_exe, path_dv, path_result, dv)
-
-        # 目标：归一化 + 转 max（给 GP / MESMO 用）
-        f1_hv = obj_original[0] - 2.0
-        f2_hv = obj_original[1] / 74.0
-        y_obj = [-f1_hv, -f2_hv]  # max space (2,)
-
-        # 单标量约束：cv（feasible => 0）
-        cv = calc_cv_from_con_raw(con_raw)
-
-        objs_max.append(y_obj)
-        cvs.append([cv])              # 注意 shape (n,1)
-        cons_raw.append(con_raw)      # 仅用于日志/你自己的HV筛选
-        vars_list.append(dv_vals)
-
-    return objs_max, cvs, cons_raw, vars_list
-
-
-def norm_X(X):
+# -------------------------
+# 4) Normalization helpers
+# -------------------------
+def norm_X(X: torch.Tensor) -> torch.Tensor:
     return (X - lb) / rng_
 
 
-# get value ranges of the decision variables
-dv = dv_range(PATH_CON)
-
-# d.v.的上下限
-lb = torch.tensor([min(v) for v in dv], dtype=torch.float32)
-ub = torch.tensor([max(v) for v in dv], dtype=torch.float32)
-
-rng_ = (ub - lb).clamp_min(1e-12)
-
-# record the first R initial samples
-t_RS = time.perf_counter()
-
-# 生成num_random_sample个初始样本
-objs_max_init, cvs_init, cons_raw_init, variables = pre_processing(PATH_EXE, PATH_DV, PATH_RESULT, dv, num_random_sample)
-
-t_RE = time.perf_counter()
-
-t_firstR = t_RE - t_RS
-
-# 把初始参考点的数据转成tensor形式
-train_X = torch.tensor(variables, dtype=torch.float32)
-train_obj = torch.tensor(objs_max_init, dtype=torch.float32)
-train_cv  = torch.tensor(cvs_init, dtype=torch.float32)
+def unnorm_X(Xn: torch.Tensor) -> torch.Tensor:
+    return Xn * rng_ + lb
 
 
+# -------------------------
+# 5) Discrete repair / sampling helpers
+# -------------------------
+def repair_to_discrete(X_cont_np: np.ndarray, dv_ranges: list[list[float]]) -> np.ndarray:
+    X_disc = np.empty_like(X_cont_np, dtype=np.double)
+
+    for i in range(X_cont_np.shape[0]):
+        for j in range(X_cont_np.shape[1]):
+            vals = np.asarray(dv_ranges[j], dtype=np.double)
+            X_disc[i, j] = vals[np.argmin(np.abs(vals - X_cont_np[i, j]))]
+
+    return X_disc
 
 
-# ref_point = [-1.1, 0.0]   # 来自文档 [1.1, 0.0] 取负
-ref_point = torch.tensor([-1.1, 0.0], dtype=torch.float32)
+def sample_random_discrete(n: int, dv_ranges: list[list[float]], rng: np.random.Generator) -> np.ndarray:
+    X = np.empty((n, len(dv_ranges)), dtype=np.double)
+    for i in range(n):
+        X[i] = [rng.choice(vals) for vals in dv_ranges]
+    return X
 
 
-
-    
-# hv_history = []
-train_X_n = norm_X(train_X)
-
-
-#############################      essential BO step for MESMO     #########################
-
-for i in range(T):
-    t_alg0 = time.perf_counter()
-
-    # 重新归一化（数据变了）
-    train_X_n = norm_X(train_X)
-
-
-    # cold start
-    m_obj1 = SingleTaskGP(train_X_n, train_obj[:, 0:1].contiguous())
-    m_obj2 = SingleTaskGP(train_X_n, train_obj[:, 1:2].contiguous())
-    m_cv   = SingleTaskGP(train_X_n, train_cv[:, 0:1].contiguous())  # train_cv 本来就是 (n,1)
+# -------------------------
+# 6) CSV init
+# -------------------------
+def init_csv(log_csv):
+    if not os.path.exists(log_csv):
+        with open(log_csv, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f, delimiter=";")
+            w.writerow([
+                "objectives",
+                "is_feasible",
+                "variables",
+                "constraints",
+                "evaluation_time",
+                "algorithm_time",
+            ])
 
 
-    # # warm start
-    # fit_gpytorch_mll(mll)
+def append_rows(log_csv, rows):
+    with open(log_csv, "a", newline="", encoding="utf-8") as f:
+        w = csv.writer(f, delimiter=";")
+        for r in rows:
+            w.writerow([
+                r["objs_original"],
+                r["is_feasible"],
+                r["x"],
+                r["con_raw"],
+                r["eval_time"],
+                r.get("alg_time", None),
+            ])
 
-    # cold start
-    model = ModelListGP(m_obj1, m_obj2, m_cv)
-    mll = SumMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_mll(
-    mll,
-    optimizer_kwargs={"options": {"maxiter": 50}},
-    )
+
+# -------------------------
+# 7) Ref point helper
+# -------------------------
+def make_ref_point(Y: torch.Tensor) -> torch.Tensor:
+    y_min = Y.min(dim=0).values
+    margin = torch.tensor([0.1, 0.1], dtype=Y.dtype, device=Y.device)
+    return y_min - margin
 
 
-    # ---- MESMO (lower bound) ----
-    # 只对“两个目标”做 MESMO（cv 不作为目标；cv 仅用于挑可行点来构造 hypercell_bounds）
-    model_obj = ModelListGP(m_obj1, m_obj2)
+# -------------------------
+# 8) Feasibility-weighted MESMO
+# -------------------------
+class FeasibilityWeightedMESMO(AcquisitionFunction):
+    def __init__(self, mesmo_acq, constraint_model, threshold: float = 0.0):
+        super().__init__(model=mesmo_acq.model)
+        self.mesmo_acq = mesmo_acq
+        self.cmodel = constraint_model
+        self.threshold = float(threshold)
+        self.std_normal = Normal(0.0, 1.0)
 
-    FEAS_TOL = 1e-8
-    is_feas = (train_cv.squeeze(-1) <= FEAS_TOL)
-    Y_for_bounds = train_obj[is_feas] if is_feas.any() else train_obj  # (n_feas, 2) or (n,2)
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        # MESMO value for the whole q-batch
+        v = self.mesmo_acq(X)  # shape: batch
 
-    # 用当前（可行）非支配前沿来构造 dominated space 的分块 bounds
-    partitioning = NondominatedPartitioning(ref_point=ref_point, Y=Y_for_bounds)
-    hypercell_bounds = partitioning.get_hypercell_bounds().unsqueeze(0)  # -> (1, 2, J, M)
+        # Constraint GP on g(x) = -cv, feasible iff g(x) >= 0
+        post = self.cmodel.posterior(X)
+        mean = post.mean.squeeze(-1)                      # (batch, q)
+        var = post.variance.squeeze(-1).clamp_min(1e-12) # (batch, q)
+        std = var.sqrt()
 
-    # 后面你 optimize_acqf_discrete / eval / torch.cat 保持不变
-    # --- 下面你的离散choices不变 ---
-    X_cand_list = [[rng.choice(values) for values in dv] for _ in range(K)]
-    X_cand = torch.tensor(X_cand_list, dtype=torch.float32)
-    X_cand_n = norm_X(X_cand)
+        z = (mean - self.threshold) / std
+        p_point = self.std_normal.cdf(z).clamp(1e-12, 1.0)  # (batch, q)
 
-    FEAS_TOL = 1e-8
-    is_feas = (train_cv.squeeze(-1) <= FEAS_TOL)
-    n_feas = int(is_feas.sum().item())
+        # batch feasibility probability
+        p_batch = p_point.prod(dim=-1)  # (batch,)
 
-    if n_feas == 0:
-    # ---------------- Phase 1: feasibility-first ----------------
-    # 用约束GP预测每个候选点的 cv 均值，选最小的（最可能可行）
-        with torch.no_grad():
-            post_cv = m_cv.posterior(X_cand_n)
-            mu_cv = post_cv.mean.squeeze(-1)  # (K,)
-        idx = torch.argmin(mu_cv).item()
-        X_next = X_cand[idx:idx+1, :]
-    else:
-        # ---------------- Phase 2: MESMO ----------------
-        # 只对两个目标做 MESMO（你已有的那段）
-        model_obj = ModelListGP(m_obj1, m_obj2)
+        return v * p_batch
 
-        Y_for_bounds = train_obj[is_feas]  # 这里保证至少有可行点了
-        partitioning = NondominatedPartitioning(ref_point=ref_point, Y=Y_for_bounds)
+
+# -------------------------
+# 9) Main BO loop
+# -------------------------
+if __name__ == "__main__":
+    if RUN_ROOT.exists():
+        shutil.rmtree(RUN_ROOT)
+    RUN_ROOT.mkdir(parents=True, exist_ok=True)
+
+    init_csv(LOG_CSV)
+
+    # ---- initial random design ----
+    t0_init = time.perf_counter()
+    X_init = sample_random_discrete(n_init, DV_RANGES, rng)
+    init_res = eval_batch(X_init, n_jobs=n_jobs)
+    t1_init = time.perf_counter()
+
+    train_X = torch.tensor([r["x"] for r in init_res], dtype=dtype, device=device)
+    train_Y = torch.tensor([r["y_max"] for r in init_res], dtype=dtype, device=device)
+    train_CV = torch.tensor([[r["cv"]] for r in init_res], dtype=dtype, device=device)
+
+    rows = []
+    for k, r in enumerate(init_res):
+        r2 = dict(r)
+        r2["alg_time"] = float(t1_init - t0_init) if k == 0 else None
+        rows.append(r2)
+    append_rows(LOG_CSV, rows)
+
+    eval_count = n_init
+
+    while eval_count < num_eval:
+        t_alg0 = time.perf_counter()
+
+        Xn = norm_X(train_X)
+
+        # objective GPs
+        m1 = SingleTaskGP(Xn, train_Y[:, 0:1].contiguous())
+        m2 = SingleTaskGP(Xn, train_Y[:, 1:2].contiguous())
+        obj_model = ModelListGP(m1, m2)
+
+        obj_mll = SumMarginalLogLikelihood(obj_model.likelihood, obj_model)
+        fit_gpytorch_mll(obj_mll, optimizer_kwargs={"options": {"maxiter": 50}})
+
+        # constraint GP: g(x) = -cv, feasible iff g(x) >= 0
+        train_G = (-train_CV).contiguous()
+        c_model = SingleTaskGP(Xn, train_G)
+        c_mll = ExactMarginalLogLikelihood(c_model.likelihood, c_model)
+        fit_gpytorch_mll(c_mll, optimizer_kwargs={"options": {"maxiter": 50}})
+
+        # feasible pool by observed cv
+        feas_mask = train_CV.squeeze(-1) <= 1e-12
+        Y_pool = train_Y[feas_mask] if feas_mask.any() else train_Y
+
+        nd_mask = is_non_dominated(Y_pool)
+        pareto_Y = Y_pool[nd_mask]
+        if pareto_Y.numel() == 0:
+            pareto_Y = Y_pool
+
+        ref_point = make_ref_point(Y_pool)
+
+        partitioning = DominatedPartitioning(ref_point=ref_point, Y=pareto_Y)
         hypercell_bounds = partitioning.get_hypercell_bounds().unsqueeze(0)
 
-        acq = qLowerBoundMultiObjectiveMaxValueEntropySearch(
-            model=model_obj,
+        mesmo = qLowerBoundMultiObjectiveMaxValueEntropySearch(
+            model=obj_model,
             hypercell_bounds=hypercell_bounds,
-            num_samples=64,
+            estimation_type="LB",
+            num_samples=mc_samples,
         )
 
-
-        X_next_n, _ = optimize_acqf_discrete(acq_function=acq, 
-                                            choices=X_cand_n, 
-                                            q=BATCH_SIZE,
-                                            )
-        # 把X_next_n还原回原来的数值
-        idx = torch.cdist(X_cand_n, X_next_n).argmin().item()
-        X_next = X_cand[idx:idx+1, :]
-    vars_next = X_next.squeeze(0).tolist()
-    
-    t_alg1 = time.perf_counter()
-    alg_time = t_alg1 - t_alg0
-
-
-    # exe eval
-    try:
-        y_obj, cv, obj_original_next, con_raw_next, is_feasible, eval_time = eval_vars_one(
-            PATH_EXE, PATH_DV, PATH_RESULT, vars_next
+        acq = FeasibilityWeightedMESMO(
+            mesmo_acq=mesmo,
+            constraint_model=c_model,
+            threshold=0.0,
         )
 
-    except Exception as e:
-        print("eval failed:", e)
-        continue
+        q = min(n_jobs, num_eval - eval_count)
 
-    # is_feasible = all(x >= 0 for x in con_raw_next)
+        bounds = torch.stack([
+            torch.zeros(dim, dtype=dtype, device=device),
+            torch.ones(dim, dtype=dtype, device=device)
+        ], dim=0)
 
-    # 更新训练集（注意：这里更新 train_obj/train_cv）
-    train_X = torch.cat([train_X, X_next], dim=0)
-    train_obj = torch.cat([train_obj, torch.tensor([y_obj], dtype=torch.float32)], dim=0)
-    train_cv  = torch.cat([train_cv,  torch.tensor([[cv]], dtype=torch.float32)], dim=0)
+        Xnext_n, _ = optimize_acqf(
+            acq_function=acq,
+            bounds=bounds,
+            q=q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            options={"maxiter": maxiter},
+        )
 
-   
+        Xnext_cont = unnorm_X(Xnext_n).detach().cpu().numpy().astype(np.double)
+        Xnext = repair_to_discrete(Xnext_cont, DV_RANGES)
 
+        t_alg1 = time.perf_counter()
+        alg_time = float(t_alg1 - t_alg0)  # <-- 改成 t_alg1
 
-    # append_log_row(LOG_CSV, obj_original_next, feasibility, vars_next, con_raw_next, eval_time, alg_time)
-    with open(LOG_CSV, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter=";")
-        writer.writerow([obj_original_next,is_feasible,vars_next,con_raw_next,eval_time,alg_time])
+        res_list = eval_batch(Xnext, n_jobs=q)
 
-    print("evaluation nums:",i+1+num_random_sample)
+        X_new = torch.tensor([r["x"] for r in res_list], dtype=dtype, device=device)
+        Y_new = torch.tensor([r["y_max"] for r in res_list], dtype=dtype, device=device)
+        CV_new = torch.tensor([[r["cv"]] for r in res_list], dtype=dtype, device=device)
 
+        train_X = torch.cat([train_X, X_new], dim=0)
+        train_Y = torch.cat([train_Y, Y_new], dim=0)
+        train_CV = torch.cat([train_CV, CV_new], dim=0)
 
+        rows = []
+        for r in res_list:
+            rr = dict(r)
+            rr["alg_time"] = alg_time
+            rows.append(rr)
+
+        append_rows(LOG_CSV, rows)
+
+        eval_count += q
+        print(f"[Mazda qMESMO-FW] eval_count = {eval_count}/{num_eval}, batch_q={q}")

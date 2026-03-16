@@ -7,8 +7,8 @@ import pandas as pd
 from pathlib import Path
 
 
-num_evaluation = 1000
-seed = 335
+num_evaluation = 1500
+seed = 333
 rng = np.random.default_rng(seed)
 
 # Paths 

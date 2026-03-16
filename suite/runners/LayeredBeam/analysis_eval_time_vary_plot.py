@@ -81,9 +81,9 @@ for algo in algo_names:
 
 ax.set_xscale("log")
 ax.set_yscale("log")
-ax.set_xlabel("Time budget (sec)")
-ax.set_ylabel("Evaluation time (sec)")
-ax.set_title("LayeredBeam: Best algorithm under each (budget, evaluation time)")
+ax.set_xlabel("Time budget (s)")
+ax.set_ylabel("Evaluation time (s)")
+ax.set_title("Best Algorithm for Each (Budget, Evaluation Time) Setting")
 
 ax.grid(True, which="major", alpha=0.25, linewidth=0.8)
 ax.grid(True, which="minor", alpha=0.10, linewidth=0.5)
@@ -98,10 +98,10 @@ cb.update_ticks()
 
 # legend
 leg = ax.legend(
-    title="Winner algorithm",
+    # title="Winner algorithm",
     loc="upper center",
-    bbox_to_anchor=(0.5, -0.16),
-    ncol=min(len(algo_names), 4),
+    bbox_to_anchor=(0.5, -0.18),
+    ncol=4,
     frameon=True,
     fancybox=True,
     columnspacing=1.4,

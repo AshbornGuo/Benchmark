@@ -127,7 +127,7 @@ ALGO_CSVS = {
         BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed331.csv",
         BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed332.csv",
         BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed333.csv",
-    ],
+    ]
 
 }
 
@@ -160,13 +160,29 @@ for algo_name, (hv_mean, hv_std) in stats.items():
     hv_lower = np.maximum(hv_mean - hv_std, 0.0)
     hv_upper = hv_mean + hv_std
 
-    plt.plot(x, hv_mean, label=f"{algo_name} (mean)")
+    plt.plot(x, hv_mean, label=f"{algo_name}")
     plt.fill_between(x, hv_lower, hv_upper, alpha=0.20)
 
 plt.xlabel("Evaluations")
 plt.ylabel("Hypervolume")
-plt.title("Hypervolume vs Evaluations (Multiple Algorithms)")
-plt.legend()
+plt.title("Hypervolume Comparison")
+# plt.legend()
+
+plt.legend(
+    loc="upper center",
+    bbox_to_anchor=(0.5, -0.15),   # 往图下方移动
+    ncol=4,                        # 一行放 4 个，可自己调
+    frameon=True
+)
+
+# plt.legend(
+#     loc="center left",
+#     bbox_to_anchor=(1.02, 0.5),
+#     frameon=True
+# )
+
+plt.tight_layout(rect=[0, 0, 0.82, 1])
+
 plt.grid(True)
 plt.tight_layout()
 

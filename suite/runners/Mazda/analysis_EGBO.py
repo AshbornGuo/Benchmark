@@ -26,6 +26,7 @@ def read_res(PATH_RESULT):
 
     # 2) 变成 (N, D) 的 ndarray
     F = np.vstack(objs_list.to_numpy())
+    F = F[:, 0: 2]
 
     # 3) 取前两个目标
     f1 = F[:, 0]
@@ -205,6 +206,7 @@ from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 #     # 2) 读取 objectives 列
 #     objs_list = df["objectives_original"].map(ast.literal_eval)
 #     F = np.vstack(objs_list.to_numpy())   # 原目标值 shape (N, 2)
+#     F = F[:, 0: 2]
 
 #     # 3) 读取 feasible mask
 #     feasible_mask = df["is_feasible"].astype(bool).to_numpy()
@@ -270,13 +272,14 @@ from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
 #####################
 ## 这是画pareto front和可行解，不可行解的
-def plot_pareto_front(csv_path, save_path="results/mazda/SBO_EGBO/Pareto_front_seed332.png"):
+def plot_pareto_front(csv_path, save_path="results/mazda/SBO_EGBO/Pareto_front_seed333.png"):
 
     # 1 读取 CSV
     df = pd.read_csv(csv_path, sep=";")
 
     objs_list = df["objectives_original"].map(ast.literal_eval)
     F = np.vstack(objs_list.to_numpy())
+    F = F[:, 0: 2]
 
     f1 = F[:, 0]
     f2 = F[:, 1]
@@ -356,6 +359,6 @@ def plot_pareto_front(csv_path, save_path="results/mazda/SBO_EGBO/Pareto_front_s
 
 
 plot_pareto_front(
-    r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EGBO/Mazda_EGBO_seed332.csv",
-    save_path=r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EGBO/Pareto_front_seed332.png"
+    r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EGBO/Mazda_EGBO_seed333.csv",
+    save_path=r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EGBO/Pareto_front_seed333.png"
 )

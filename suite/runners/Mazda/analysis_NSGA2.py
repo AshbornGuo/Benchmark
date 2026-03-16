@@ -7,13 +7,13 @@ from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from pymoo.indicators.hv import HV
 import matplotlib.pyplot as plt
 
-# read csv to get reuslts of algorithms
+# read csv to get reuslts of algorithms  NSGA2
 
 PATH_NSGA2_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed331.csv"
 PATH_NSGA2_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed332.csv"
 PATH_NSGA2_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed333.csv"
-PATH_NSGA2_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed334.csv"
-PATH_NSGA2_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed335.csv"
+
+
 
 
 def read_res(PATH_RESULT):
@@ -81,28 +81,25 @@ def feas_ratio(df, step = 50) -> list:
 
 
 # 
-step = 1
+step = 50
 
 # constaints, normalized objectives 
 cons_NSGA2_331, Fnor_NSGA2_331 = read_res(PATH_NSGA2_331)
 cons_NSGA2_332, Fnor_NSGA2_332 = read_res(PATH_NSGA2_332)
 cons_NSGA2_333, Fnor_NSGA2_333 = read_res(PATH_NSGA2_333)
-cons_NSGA2_334, Fnor_NSGA2_334 = read_res(PATH_NSGA2_334)
-cons_NSGA2_335, Fnor_NSGA2_335 = read_res(PATH_NSGA2_335)
+
 
 # feasible rate
 fea_NSGA2_331 = feas_ratio(cons_NSGA2_331,step)
 fea_NSGA2_332 = feas_ratio(cons_NSGA2_332,step)
 fea_NSGA2_333 = feas_ratio(cons_NSGA2_333,step)
-fea_NSGA2_334 = feas_ratio(cons_NSGA2_334,step)
-fea_NSGA2_335 = feas_ratio(cons_NSGA2_335,step)
+
 
 # hypervolume
 hv_NSGA2_331 = hv_analysis(Fnor_NSGA2_331, cons_NSGA2_331,step)
 hv_NSGA2_332 = hv_analysis(Fnor_NSGA2_332, cons_NSGA2_332,step)
 hv_NSGA2_333 = hv_analysis(Fnor_NSGA2_333, cons_NSGA2_333,step)
-hv_NSGA2_334 = hv_analysis(Fnor_NSGA2_334, cons_NSGA2_334,step)
-hv_NSGA2_335 = hv_analysis(Fnor_NSGA2_335, cons_NSGA2_335,step)
+
 
 # take average
 hv_runs = [hv_NSGA2_331, hv_NSGA2_332, hv_NSGA2_333]  # 每个是长度 T 的 list
@@ -111,7 +108,7 @@ hv_mean = hv_runs.mean(axis=0)
 hv_std = hv_runs.std(axis=0)
 
 
-fea_runs = [fea_NSGA2_331, fea_NSGA2_332, fea_NSGA2_333, fea_NSGA2_334, fea_NSGA2_335]  # 每个是长度 T 的 list
+fea_runs = [fea_NSGA2_331, fea_NSGA2_332, fea_NSGA2_333]  # 每个是长度 T 的 list
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)
@@ -183,180 +180,3 @@ plt.close()
 
 
 
-##############################
-import pandas as pd
-import numpy as np
-import ast
-import matplotlib.pyplot as plt
-from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
-
-
-import os
-import pandas as pd
-import numpy as np
-import ast
-import matplotlib.pyplot as plt
-from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
-
-## 这是画10层pareto front的
-# def plot_first_k_pareto_fronts(csv_path, k=10, save_path="results/mazda/NSGA2/pareto_front_10_layers.png"):
-#     # 1) 读取 CSV
-#     df = pd.read_csv(csv_path, sep=";")
-
-#     # 2) 读取 objectives 列
-#     objs_list = df["objectives"].map(ast.literal_eval)
-#     F = np.vstack(objs_list.to_numpy())   # 原目标值 shape (N, 2)
-
-#     # 3) 读取 feasible mask
-#     feasible_mask = df["is_feasible"].astype(bool).to_numpy()
-#     F_feasible = F[feasible_mask]
-
-#     if len(F_feasible) == 0:
-#         print("No feasible solutions found.")
-#         return
-
-#     # 4) 两个目标都是最小化，直接做非支配排序
-#     fronts = NonDominatedSorting().do(F_feasible)
-
-#     num_fronts = min(k, len(fronts))
-
-#     plt.figure(figsize=(7, 5))
-#     cmap = plt.cm.get_cmap("tab10", num_fronts)
-
-#     for i in range(num_fronts):
-#         idx = fronts[i]
-#         front_points = F_feasible[idx]
-
-#         f1 = front_points[:, 0]
-#         f2 = front_points[:, 1]
-
-#         # 按你的要求画图
-#         x = -f2
-#         y = f1
-
-#         plt.scatter(
-#             x,
-#             y,
-#             s=25,
-#             color=cmap(i),
-#             label=f"Front {i+1}"
-#         )
-
-#         order = np.argsort(x)
-#         plt.plot(
-#             x[order],
-#             y[order],
-#             color=cmap(i),
-#             alpha=0.7
-#         )
-
-#     plt.xlabel("-Objective 2")
-#     plt.ylabel("Objective 1")
-#     plt.title(f"First {num_fronts} Pareto Front Layers")
-#     plt.legend()
-#     plt.grid(True)
-#     plt.tight_layout()
-
-#     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-#     plt.savefig(save_path, dpi=300, bbox_inches="tight")
-#     plt.close()
-
-#     print("Saved:", os.path.abspath(save_path))
-
-# plot_first_k_pareto_fronts(
-#     r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed331.csv",
-#     k=10,
-#     save_path=r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Pareto_front_10_layers_seed331.png"
-# )
-
-#####################
-## 这是画pareto front和可行解，不可行解的
-def plot_pareto_front(csv_path, save_path="results/mazda/NSGA2/Pareto_front_seed333.png"):
-
-    # 1 读取 CSV
-    df = pd.read_csv(csv_path, sep=";")
-
-    objs_list = df["objectives"].map(ast.literal_eval)
-    F = np.vstack(objs_list.to_numpy())
-
-    f1 = F[:, 0]
-    f2 = F[:, 1]
-
-    feasible_mask = df["is_feasible"].astype(bool).to_numpy()
-
-    # 2 画所有点
-    plt.figure(figsize=(7,5))
-
-    # 不可行解
-    infeasible = ~feasible_mask
-    plt.scatter(
-        -f2[infeasible],
-        f1[infeasible],
-        color="gray",
-        s=20,
-        label="Infeasible",
-        alpha=0.6
-    )
-
-    # 可行解
-    plt.scatter(
-        -f2[feasible_mask],
-        f1[feasible_mask],
-        color="blue",
-        s=20,
-        label="Feasible",
-        alpha=0.7
-    )
-
-    # 3 对可行解做非支配排序
-    F_feasible = F[feasible_mask]
-
-    fronts = NonDominatedSorting().do(F_feasible)
-
-    pareto_idx = fronts[0]
-
-    pareto_points = F_feasible[pareto_idx]
-
-    pf1 = pareto_points[:,0]
-    pf2 = pareto_points[:,1]
-
-    x_pf = -pf2
-    y_pf = pf1
-
-    # 4 画 Pareto front
-    plt.scatter(
-        x_pf,
-        y_pf,
-        color="red",
-        s=35,
-        label="Pareto Front"
-    )
-
-    order = np.argsort(x_pf)
-
-    plt.plot(
-        x_pf[order],
-        y_pf[order],
-        color="red",
-        linewidth=2
-    )
-
-    plt.xlabel("-Objective 2")
-    plt.ylabel("Objective 1")
-    plt.title("Pareto Front (Seed 331)")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-
-    plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    plt.close()
-
-    print("Saved:", os.path.abspath(save_path))
-
-
-plot_pareto_front(
-    r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Mazda_NSGA2_seed333.csv",
-    save_path=r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2/Pareto_front_seed333.png"
-)

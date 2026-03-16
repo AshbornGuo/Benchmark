@@ -1,8 +1,8 @@
 import shutil
 from pathlib import Path
 
-src = Path(r"results/LayeredBeam/EGBO/LayeredBeam_EGBO_seed331.csv")
-dst = src.with_name("LayeredBeam_EGBO_seed331_renamed.csv")
+src = Path(r"results/mazda/SBO_EGBO/Mazda_EGBO_seed333.csv")
+dst = src.with_name("Mazda_EGBO_seed333_renamed.csv")
 
 # 先复制
 shutil.copy2(src, dst)

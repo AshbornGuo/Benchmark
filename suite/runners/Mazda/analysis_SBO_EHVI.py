@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 
 # read csv to get reuslts of algorithms
 
-PATH_SBO_EHVI_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed331.csv"
-PATH_SBO_EHVI_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed332.csv"
-PATH_SBO_EHVI_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed333.csv"
-PATH_SBO_EHVI_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed334.csv"
-PATH_SBO_EHVI_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed335.csv"
+PATH_SBO_EHVI_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_qLogNEHVI_seed331.csv"
+PATH_SBO_EHVI_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_qLogNEHVI_seed332.csv"
+PATH_SBO_EHVI_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_qLogNEHVI_seed333.csv"
+# PATH_SBO_EHVI_334 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed334.csv"
+# PATH_SBO_EHVI_335 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EHVI/Mazda_SBO_EHVI_seed335.csv"
 
 
 def read_res(PATH_RESULT):
@@ -87,31 +87,31 @@ step = 50
 cons_SBO_EHVI_331, Fnor_SBO_EHVI_331 = read_res(PATH_SBO_EHVI_331)
 cons_SBO_EHVI_332, Fnor_SBO_EHVI_332 = read_res(PATH_SBO_EHVI_332)
 cons_SBO_EHVI_333, Fnor_SBO_EHVI_333 = read_res(PATH_SBO_EHVI_333)
-cons_SBO_EHVI_334, Fnor_SBO_EHVI_334 = read_res(PATH_SBO_EHVI_334)
-cons_SBO_EHVI_335, Fnor_SBO_EHVI_335 = read_res(PATH_SBO_EHVI_335)
+# cons_SBO_EHVI_334, Fnor_SBO_EHVI_334 = read_res(PATH_SBO_EHVI_334)
+# cons_SBO_EHVI_335, Fnor_SBO_EHVI_335 = read_res(PATH_SBO_EHVI_335)
 
 # feasible rate
 fea_SBO_EHVI_331 = feas_ratio(cons_SBO_EHVI_331,step)
 fea_SBO_EHVI_332 = feas_ratio(cons_SBO_EHVI_332,step)
 fea_SBO_EHVI_333 = feas_ratio(cons_SBO_EHVI_333,step)
-fea_SBO_EHVI_334 = feas_ratio(cons_SBO_EHVI_334,step)
-fea_SBO_EHVI_335 = feas_ratio(cons_SBO_EHVI_335,step)
+# fea_SBO_EHVI_334 = feas_ratio(cons_SBO_EHVI_334,step)
+# fea_SBO_EHVI_335 = feas_ratio(cons_SBO_EHVI_335,step)
 
 # hypervolume
 hv_SBO_EHVI_331 = hv_analysis(Fnor_SBO_EHVI_331, cons_SBO_EHVI_331,step)
 hv_SBO_EHVI_332 = hv_analysis(Fnor_SBO_EHVI_332, cons_SBO_EHVI_332,step)
 hv_SBO_EHVI_333 = hv_analysis(Fnor_SBO_EHVI_333, cons_SBO_EHVI_333,step)
-hv_SBO_EHVI_334 = hv_analysis(Fnor_SBO_EHVI_334, cons_SBO_EHVI_334,step)
-hv_SBO_EHVI_335 = hv_analysis(Fnor_SBO_EHVI_335, cons_SBO_EHVI_335,step)
+# hv_SBO_EHVI_334 = hv_analysis(Fnor_SBO_EHVI_334, cons_SBO_EHVI_334,step)
+# hv_SBO_EHVI_335 = hv_analysis(Fnor_SBO_EHVI_335, cons_SBO_EHVI_335,step)
 
 # take average
-hv_runs = [hv_SBO_EHVI_331, hv_SBO_EHVI_332, hv_SBO_EHVI_333, hv_SBO_EHVI_334, hv_SBO_EHVI_335]  # 每个是长度 T 的 list
+hv_runs = [hv_SBO_EHVI_331, hv_SBO_EHVI_332, hv_SBO_EHVI_333]  # 每个是长度 T 的 list
 hv_runs = np.array(hv_runs)   # shape: (5, T)
 hv_mean = hv_runs.mean(axis=0)
 hv_std = hv_runs.std(axis=0)
 
 
-fea_runs = [fea_SBO_EHVI_331, fea_SBO_EHVI_332, fea_SBO_EHVI_333, fea_SBO_EHVI_334, fea_SBO_EHVI_335]  # 每个是长度 T 的 list
+fea_runs = [fea_SBO_EHVI_331, fea_SBO_EHVI_332, fea_SBO_EHVI_333]  # 每个是长度 T 的 list
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)

@@ -11,24 +11,23 @@ import uuid
 from multiprocessing import Manager
 
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.sms import SMSEMOA   # ✅ 改：SMS-EMOA
+from pymoo.algorithms.moo.sms import SMSEMOA
 from pymoo.optimize import minimize
 from pymoo.core.callback import Callback
 from pymoo.parallelization.joblib import JoblibParallelization
 
 
-random_seed = 335
+random_seed = 333
 population_size = 50
-num_eval = 1000
+num_eval = 1500
 
 PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
 PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
 
-PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS-EMOA"
+PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SMS_EMOA"
 os.makedirs(PATH_RESULT, exist_ok=True)
-LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_SMSEMOA_seed{random_seed}.csv")  # ✅ 可选：改文件名
+LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_SMSEMOA_seed{random_seed}.csv")
 
-# 每次仿真独立目录（并行关键）
 SCRIPT_DIR = Path(__file__).resolve().parent
 RUN_ROOT = SCRIPT_DIR / "runs" / "MAZDA"
 
@@ -90,7 +89,6 @@ class Mazda_mop(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
 
-        # 评估编号（只锁这一小段，不影响并行仿真）
         with self.eval_lock:
             self.eval_counter.value += 1
             eval_id = int(self.eval_counter.value)
@@ -98,12 +96,10 @@ class Mazda_mop(ElementwiseProblem):
         t2 = None
         t3 = None
 
-        # continuous -> discrete
         x_idx = np.rint(x).astype(int)
         x_idx = np.clip(x_idx, self.xl, self.xu).astype(int)
         real_x = [self.dv[i][x_idx[i]] for i in range(len(x_idx))]
 
-        # 每次评估一个独立 workdir
         sim_id = 255 + (uuid.uuid4().int % 1_000_000)
         workdir = RUN_ROOT / f"sim_{sim_id}"
         workdir.mkdir(parents=True, exist_ok=True)
@@ -119,7 +115,7 @@ class Mazda_mop(ElementwiseProblem):
 
             file_obj = workdir / "pop_objs_eval.txt"
             file_con = workdir / "pop_cons_eval.txt"
-            file_dv  = workdir / "pop_vars_eval.txt"
+            file_dv = workdir / "pop_vars_eval.txt"
 
             with open(file_obj, "r") as f:
                 objs = list(map(float, f.read().split()))
@@ -151,7 +147,6 @@ class Mazda_mop(ElementwiseProblem):
         eval_time = (t3 - t2) if (t2 is not None and t3 is not None) else None
         is_feasible = np.all(G <= 0)
 
-        # 每个 workdir 写自己的 result.csv
         local_csv = workdir / "result.csv"
         with open(local_csv, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter=";")
@@ -182,7 +177,6 @@ if __name__ == "__main__":
         elementwise_runner=runner
     )
 
-    # ✅ 改：用 SMS-EMOA 替代 
     algorithm = SMSEMOA(pop_size=population_size)
 
     res = minimize(
@@ -194,7 +188,6 @@ if __name__ == "__main__":
         verbose=True
     )
 
-    # 合并并排序
     header = ["eval_id", "objectives", "is_feasible", "variables", "constraints", "evaluation_time"]
 
     rows = []
