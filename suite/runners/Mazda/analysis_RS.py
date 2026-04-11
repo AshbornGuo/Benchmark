@@ -8,9 +8,9 @@ from pymoo.indicators.hv import HV
 import matplotlib.pyplot as plt
 
 # read csv to get reuslts of algorithms
-PATH_RS_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search/Mazda_randomsearch_seed331.csv"
-PATH_RS_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search/Mazda_randomsearch_seed332.csv"
-PATH_RS_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search/Mazda_randomsearch_seed333.csv"
+PATH_RS_331 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search/Mazda_RS_seed331.csv"
+PATH_RS_332 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search/Mazda_RS_seed332.csv"
+PATH_RS_333 = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search/Mazda_RS_seed333.csv"
 
 
 

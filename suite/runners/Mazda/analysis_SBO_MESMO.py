@@ -101,15 +101,13 @@ hv_SBO_MESMO_333 = hv_analysis(Fnor_SBO_MESMO_333, cons_SBO_MESMO_333,step)
 
 
 # take average
-hv_runs = [hv_SBO_MESMO_331,  hv_SBO_MESMO_333]  # 每个是长度 T 的 list
-# hv_runs = [hv_SBO_MESMO_331, hv_SBO_MESMO_332, hv_SBO_MESMO_333]  # 每个是长度 T 的 list
+hv_runs = [hv_SBO_MESMO_331, hv_SBO_MESMO_332, hv_SBO_MESMO_333]  # 每个是长度 T 的 list
 hv_runs = np.array(hv_runs)   # shape: (5, T)
 hv_mean = hv_runs.mean(axis=0)
 hv_std = hv_runs.std(axis=0)
 
 
-fea_runs = [fea_SBO_MESMO_331, fea_SBO_MESMO_333]  # 每个是长度 T 的 list
-# fea_runs = [fea_SBO_MESMO_331, fea_SBO_MESMO_332, fea_SBO_MESMO_333]  # 每个是长度 T 的 list
+fea_runs = [fea_SBO_MESMO_331, fea_SBO_MESMO_332, fea_SBO_MESMO_333]  # 每个是长度 T 的 list
 fea_runs = np.array(fea_runs)   # shape: (5, T)
 fea_mean = fea_runs.mean(axis=0)
 fea_std = fea_runs.std(axis=0)

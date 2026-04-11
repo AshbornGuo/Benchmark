@@ -20,13 +20,13 @@ from pymoo.algorithms.moo.moead import ParallelMOEAD
 # =========================
 # 全局设置：种子、规模、输出 CSV
 # =========================
-seed = 331
+seed = 333
 population_size = 50
 num_eval = 1500
 n_jobs = 5
 
 # 罚函数系数：把约束违反度加到每个目标上
-penalty = 1e2
+penalty = 1e1
 
 
 # =========================
@@ -71,7 +71,8 @@ dim = len(dv)
 # =========================
 # 单次仿真的核心执行
 # =========================
-def run_one_sim(sim_id: int, vector):
+# def run_one_sim(sim_id: int, vector):
+def run_one_sim(sim_id, vector):
     workdir = RUN_ROOT / f"sim_{sim_id}"
     workdir.mkdir(parents=True, exist_ok=True)
 
@@ -147,7 +148,8 @@ class MazdaProblem(ElementwiseProblem):
         self.dv = dv
 
     def _evaluate(self, x, out, *args, **kwargs):
-        sim_id = 255 + (uuid.uuid4().int % 1_000_000)
+        # sim_id = 255 + (uuid.uuid4().int % 1_000_000)
+        sim_id = f"{time.time_ns()}_{uuid.uuid4().hex[:6]}"
 
         x_idx = np.rint(x).astype(int)
         x_idx = np.clip(x_idx, self.xl.astype(int), self.xu.astype(int))

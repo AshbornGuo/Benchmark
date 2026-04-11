@@ -35,14 +35,14 @@ warnings.filterwarnings("ignore", category=InputDataWarning)
 # -------------------------
 # 1) Global config
 # -------------------------
-seed = 332
+seed = 333
 rng = np.random.default_rng(seed)
 torch.manual_seed(seed)
 
 num_eval = 1500
 n_init = 50
 n_jobs = 5
-mc_samples = 64
+mc_samples = 16
 dtype = torch.double
 device = torch.device("cpu")
 

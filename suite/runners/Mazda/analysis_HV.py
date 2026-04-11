@@ -173,8 +173,17 @@ for algo_name, (hv_mean, hv_std) in stats.items():
     hv_lower = np.maximum(hv_mean - hv_std, 0.0)
     hv_upper = hv_mean + hv_std
 
-    plt.plot(x, hv_mean, label=f"{algo_name}")
-    plt.fill_between(x, hv_lower, hv_upper, alpha=0.20)
+    # plt.plot(x, hv_mean, label=f"{algo_name}")
+    # plt.fill_between(x, hv_lower, hv_upper, alpha=0.20)
+
+    # 手动在最前面加一个零点
+    x_plot = np.insert(x, 0, 0)
+    hv_mean_plot = np.insert(hv_mean, 0, 0.0)
+    hv_lower_plot = np.insert(hv_lower, 0, 0.0)
+    hv_upper_plot = np.insert(hv_upper, 0, 0.0)
+    
+    plt.plot(x_plot, hv_mean_plot, label=algo_name)
+    plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20)
 
 plt.xlabel("Evaluations")
 plt.ylabel("Hypervolume")

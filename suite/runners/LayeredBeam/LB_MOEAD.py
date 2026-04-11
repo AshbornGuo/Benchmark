@@ -36,7 +36,7 @@ num_eval = 500
 n_jobs = 5
 
 # 罚函数系数：把约束违反度加到每个目标上
-penalty = 1e2
+penalty = 1e1
 
 dim = 10
 low, high = -5, 5
@@ -120,6 +120,7 @@ class LayeredBeamProblem(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         sim_id = 255 + (uuid.uuid4().int % 1_000_000)
+
         x_list = x.tolist()
 
         objs, eval_time = run_one_sim(sim_id, x_list)

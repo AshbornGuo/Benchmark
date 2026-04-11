@@ -1,19 +1,16 @@
-import shutil
-from pathlib import Path
+import pandas as pd
 
-src = Path(r"results/mazda/SBO_EGBO/Mazda_EGBO_seed333.csv")
-dst = src.with_name("Mazda_EGBO_seed333_renamed.csv")
+file_path = r"results/TurbofanArch/SBO_qLogNEHVI/TurbofanArch_qLogNEHVI_seed332.csv"
+file_path = r"results/TurbofanArch/SBO_qLogNEHVI/TurbofanArch_qLogNEHVI_seed332.csv"
 
-# 先复制
-shutil.copy2(src, dst)
+# 读取 ; 分隔的 csv
+df = pd.read_csv(file_path, sep=';')
 
-# 只修改第一行表头
-text = dst.read_text(encoding="utf-8")
-lines = text.splitlines()
+# 只保留前 500 条评估数据
+df = df.iloc[:500]
 
-if lines:
-    lines[0] = lines[0].replace("objectives_original", "objectives", 1)
-    dst.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print("Header renamed in:", dst)
-else:
-    print("File is empty.")
+# 覆盖保存
+df.to_csv(file_path, sep=';', index=False)
+
+print(df.head())
+print("处理完成：已保留表头 + 500条评估数据")

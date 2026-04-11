@@ -156,7 +156,7 @@ SBO_CSVS = {
     # "EHVI": [
     #     BASE_DIR / "qLogNEHVI" / "Mazda_qLogNEHVI_seed331.csv",
     #     BASE_DIR / "qLogNEHVI" / "Mazda_qLogNEHVI_seed332.csv",
-    #     BASE_DIR / "qLogNEHVI" / "LayeredBeam_qLogNEHVI_seed333.csv",
+    #     BASE_DIR / "qLogNEHVI" / "Mazda_qLogNEHVI_seed333.csv",
     # ],
     "ParEGO": [
         BASE_DIR / "qLogNParEGO" / "Mazda_qLogNParEGO_seed331.csv",
@@ -164,9 +164,9 @@ SBO_CSVS = {
         BASE_DIR / "qLogNParEGO" / "Mazda_qLogNParEGO_seed333.csv",
     ],
     # "MESMO": [
-    #     BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed331.csv",
-    #     BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed332.csv",
-    #     BASE_DIR / "MESMO" / "LayeredBeam_MESMO_seed333.csv",
+    #     BASE_DIR / "MESMO" / "Mazda_MESMO_seed331.csv",
+    #     BASE_DIR / "MESMO" / "Mazda_MESMO_seed332.csv",
+    #     BASE_DIR / "MESMO" / "Mazda_MESMO_seed333.csv",
     # ],
 }
 
@@ -185,14 +185,14 @@ EA_CSVS = {
     },
     # "MOEAD": {
     #     "seed": [
-    #         BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_seed331.csv",
-    #         BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_seed332.csv",
-    #         BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_seed333.csv",
+    #         BASE_DIR / "MOEAD" / "Mazda_MOEAD_seed331.csv",
+    #         BASE_DIR / "MOEAD" / "Mazda_MOEAD_seed332.csv",
+    #         BASE_DIR / "MOEAD" / "Mazda_MOEAD_seed333.csv",
     #     ],
     #     "gen": [
-    #         BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_gentime331.csv",
-    #         BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_gentime332.csv",
-    #         BASE_DIR / "MOEAD" / "LayeredBeam_MOEAD_gentime333.csv",
+    #         BASE_DIR / "MOEAD" / "Mazda_MOEAD_gentime331.csv",
+    #         BASE_DIR / "MOEAD" / "Mazda_MOEAD_gentime332.csv",
+    #         BASE_DIR / "MOEAD" / "Mazda_MOEAD_gentime333.csv",
     #     ],
     # },
     "SMSEMOA": {
@@ -210,15 +210,15 @@ EA_CSVS = {
 
     # "RandomSearch": {
     #     "seed": [
-    #         BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed331.csv",
-    #         BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed332.csv",
-    #         BASE_DIR / "randomsearch" / "LayeredBeam_RS_seed333.csv",
+    #         BASE_DIR / "randomsearch" / "Mazda_RS_seed331.csv",
+    #         BASE_DIR / "randomsearch" / "Mazda_RS_seed332.csv",
+    #         BASE_DIR / "randomsearch" / "Mazda_RS_seed333.csv",
     #     ],
 
     #     "time": [
-    #     BASE_DIR / "randomsearch" / "LayeredBeam_RS_algtime_seed331.csv",
-    #     BASE_DIR / "randomsearch" / "LayeredBeam_RS_algtime_seed332.csv",
-    #     BASE_DIR / "randomsearch" / "LayeredBeam_RS_algtime_seed333.csv",
+    #     BASE_DIR / "randomsearch" / "Mazda_RS_algtime_seed331.csv",
+    #     BASE_DIR / "randomsearch" / "Mazda_RS_algtime_seed332.csv",
+    #     BASE_DIR / "randomsearch" / "Mazda_RS_algtime_seed333.csv",
 
     #     ],
     # },

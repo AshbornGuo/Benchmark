@@ -1,140 +1,202 @@
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing as mp
 import os
 import shutil
 import time
+import random
 import subprocess
-import numpy as np
-import pandas as pd
 from pathlib import Path
+import pandas as pd
+import csv
 
 
-num_evaluation = 1500
+# =========================
+# Basic settings
+# =========================
 seed = 333
-rng = np.random.default_rng(seed)
+random.seed(seed)
 
-# Paths 
-PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx" # constraint file
-PATH_EXE   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
-PATH_DV   = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/pop_vars_eval.txt"
-PATH_RESULT   = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search"
+num_batches = 300          # 批次数
+max_workers = 5            # 每批并行评估数
+num_evaluation = num_batches * max_workers
+
+PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
+PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
+PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/random_search"
+
+RESULT_DIR = Path(PATH_RESULT)
+RUN_ROOT = RESULT_DIR / "runs"
 
 os.makedirs(PATH_RESULT, exist_ok=True)
 
-def dv_range(df_path) -> list:
-    """
-    retriet the range of dv from txt file
-   
-    :param df_path: Description
-    :return: Description
-    """
 
-    dicision_variable = pd.read_excel(df_path)
+# =========================
+# Read design variable ranges
+# =========================
+def dv_range(df_path) -> list[list[float]]:
+    decision_variable = pd.read_excel(df_path)
     volume_lists = []
-    for _, row in dicision_variable.iterrows():
-        # retriet dv and its values
+
+    for _, row in decision_variable.iterrows():
         dv = row["Design Variable"]
         volume_str = row["Discrete Volume"]
 
-        # check and skill null rows
         if pd.isna(dv) or pd.isna(volume_str):
             continue
-    
-        # all possible values of a dv
-        values = [float(v.strip()) for v in volume_str.split(",")]
-        # values of all 222 dv
+
+        values = [float(v.strip()) for v in str(volume_str).split(",")]
         volume_lists.append(values)
 
-    return volume_lists 
+    return volume_lists
 
-# run the Mazda problem 
-def run_exe(exe_path, input_txt, output_dir):
-    # check and creat a new file if not exist
-    os.makedirs(output_dir, exist_ok=True) 
-    # copy input txt file into output_dir 
-    shutil.copyfile(input_txt, os.path.join(output_dir, "pop_vars_eval.txt"))
 
-    subprocess.run([exe_path, output_dir], check=True)
+# =========================
+# Worker
+# =========================
+def worker(task_id, sampled, exe_path, run_root_str):
+    run_root = Path(run_root_str)
+    workdir = run_root / f"sim_{task_id}"
+    workdir.mkdir(parents=True, exist_ok=True)
 
-def algo_eval(path_exe, path_dv, path_result, dv_ranges) -> tuple[list[float], bool, list[float], list[float], float, float]:
-    """
-    retriet the range of dv from txt file
-   
-    :param df_path: Description
-    :return: Description
-    :rtype: list
-    """
-    
-    t_0 = time.perf_counter() # start of a random search
-    
-    # generate a solution usting random search
-    with open(path_dv, "w") as f:
+    file_dv = workdir / "pop_vars_eval.txt"
+    file_obj = workdir / "pop_objs_eval.txt"
+    file_con = workdir / "pop_cons_eval.txt"
 
-        sampled = []
-        for values in dv_ranges:
-            sampled.append(rng.choice(values))
-
+    with open(file_dv, "w", encoding="utf-8") as f:
         f.write("\t".join(map(str, sampled)) + "\n")
-    
-    t_1 = time.perf_counter() # end of a random search; start of an evaluation
 
-    # run exe and output to path_result
-    run_exe(path_exe, path_dv, path_result)
+    t0 = time.perf_counter()
+    subprocess.run([exe_path, str(workdir)], check=True)
+    t1 = time.perf_counter()
 
-    t_2 = time.perf_counter() # end of an evaluation
-
-    algo_time = t_1 - t_0 # alforithm running time
-    eval_time = t_2 - t_1 #evaluation time
-
-    # read 3 txt file(decision variables, ojbctives and constraints condition)
-    file_dv = os.path.join(path_result, "pop_vars_eval.txt")
-    file_obj = os.path.join(path_result, "pop_objs_eval.txt")
-    file_con = os.path.join(path_result, "pop_cons_eval.txt")
-
-    with open(file_obj, "r") as f:
+    with open(file_obj, "r", encoding="utf-8") as f:
         objs = [float(x) for x in f.read().split()]
 
-    with open(file_dv, "r") as f:
-        vars = [float(x) for x in f.read().split()]
-
-    with open(file_con, "r") as f:
+    with open(file_con, "r", encoding="utf-8") as f:
         cons = [float(x) for x in f.read().split()]
 
-    # If all constraint values are ≥ 0, return 1 (feasible); otherwise, return 0 (infeasible)
-    feasibility = all(x>=0 for x in cons)
-    
-    # tuple[list[float], int, list[float], list[float], float, float]
-    return objs, feasibility, vars, cons, algo_time, eval_time   
+    with open(file_dv, "r", encoding="utf-8") as f:
+        vars_ = [float(x) for x in f.read().split()]
+
+    feasibility = all(x >= 0 for x in cons)
+
+    return {
+        "task_id": task_id,
+        "objectives": objs,
+        "is_feasible": feasibility,
+        "variables": vars_,
+        "constraints": cons,
+        "evaluation_time": t1 - t0,
+    }
 
 
+if __name__ == "__main__":
+    mp.freeze_support()
 
+    if RUN_ROOT.exists():
+        print(f"Cleaning old runs folder: {RUN_ROOT.resolve()}")
+        shutil.rmtree(RUN_ROOT)
+    RUN_ROOT.mkdir(parents=True, exist_ok=True)
+    RESULT_DIR.mkdir(parents=True, exist_ok=True)
 
-# get value ranges of the decision variables
-dv = dv_range(PATH_CON)
+    LOG_CSV = RESULT_DIR / f"Mazda_RS_seed{seed}.csv"
+    ALGTIME_CSV = RESULT_DIR / f"Mazda_RS_algtime_seed{seed}.csv"
 
-df = pd.DataFrame(
-    columns=[
+    columns = [
+        # "task_id",
+        # "batch_id",
         "objectives",
         "is_feasible",
         "variables",
         "constraints",
-        "algorithm_time",
+        # "algorithm_time",
         "evaluation_time",
     ]
-)
+    pd.DataFrame(columns=columns).to_csv(LOG_CSV, index=False, sep=";")
 
-for i in range(num_evaluation):
-    objs, feas, vars_, cons, t_algo, t_eval = algo_eval(PATH_EXE, PATH_DV, PATH_RESULT, dv)
+    dv_ranges = dv_range(PATH_CON)
 
-    df.loc[len(df)] = {
-        "objectives": objs,
-        "is_feasible": feas,
-        "variables": vars_,
-        "constraints": cons,
-        "algorithm_time": t_algo,
-        "evaluation_time": t_eval,
+    # =========================
+    # Sampling all candidates
+    # =========================
+    t0_rs = time.perf_counter()
+
+    all_samples = []
+    all_task_ids = []
+    all_batch_ids = []
+
+    task_id = 1
+    for batch_id in range(1, num_batches + 1):
+        for _ in range(max_workers):
+            sampled = [random.choice(values) for values in dv_ranges]
+            all_samples.append(sampled)
+            all_task_ids.append(task_id)
+            all_batch_ids.append(batch_id)
+            task_id += 1
+
+    t1_rs = time.perf_counter()
+
+    rs_algorithm_time = t1_rs - t0_rs
+    algorithm_time_per_batch = rs_algorithm_time / num_batches
+
+    print(f"RS algorithm time (sampling only): {rs_algorithm_time:.6f} s")
+    print(f"Algorithm time per batch ({max_workers} evals): {algorithm_time_per_batch:.6f} s")
+
+    # 保存“每批算法时间”
+    rows = []
+    for batch_id in range(1, num_batches + 1):
+        rows.append({
+            "evaluations": batch_id * max_workers,
+            "algorithm_time": algorithm_time_per_batch
+        })
+    pd.DataFrame(rows).to_csv(ALGTIME_CSV, index=False)
+
+    # task_id -> batch_id 映射
+    task_to_batch = {
+        all_task_ids[i]: all_batch_ids[i]
+        for i in range(len(all_task_ids))
     }
 
+    # =========================
+    # Parallel evaluation
+    # =========================
+    t0_all = time.perf_counter()
 
-RESULT_DIR = Path(PATH_RESULT)   
-RESULT_DIR.mkdir(parents=True, exist_ok=True)
-out_file = RESULT_DIR / f"Mazda_randomsearch_seed{seed}.csv"
-df.to_csv(out_file, index=False, sep=";")
+    with ProcessPoolExecutor(max_workers=max_workers) as ex:
+        fut_to_info = {}
+
+        for i in range(num_evaluation):
+            tid = all_task_ids[i]
+            sampled = all_samples[i]
+
+            fut = ex.submit(worker, tid, sampled, PATH_EXE, str(RUN_ROOT))
+            fut_to_info[fut] = tid
+
+        for fut in as_completed(fut_to_info):
+            tid = fut_to_info[fut]
+            batch_id = task_to_batch[tid]
+
+            try:
+                res = fut.result()
+
+                with open(LOG_CSV, "a", newline="", encoding="utf-8") as f:
+                    writer = csv.writer(f, delimiter=";")
+                    writer.writerow([
+                        # res["task_id"],
+                        # batch_id,
+                        res["objectives"],
+                        res["is_feasible"],
+                        res["variables"],
+                        res["constraints"],
+                        # algorithm_time_per_batch,
+                        res["evaluation_time"],
+                    ])
+
+                print(f"Finished task {tid} (batch {batch_id})")
+
+            except Exception as e:
+                print(f"Task {tid} failed: {e}")
+
+    t1_all = time.perf_counter()
+    print(f"Total wall-clock time: {t1_all - t0_all:.6f} s")
+    print(f"Results saved to: {LOG_CSV}")
