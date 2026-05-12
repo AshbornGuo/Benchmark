@@ -43,8 +43,11 @@ algo_names = data.columns.tolist()
 
 ##########
 
-eval_time_variation = np.float_power(2, np.arange(-13, 17, 1.5))
-time_budget_list = np.float_power(2, np.arange(-11, 17, 1.5))
+# eval_time_variation = np.float_power(2, np.arange(-13, 17, 1.5))
+# time_budget_list = np.float_power(2, np.arange(-11, 17, 1.5))
+
+eval_time_variation = np.float_power(2, np.arange(-3, 17.1, 1.0))
+time_budget_list = np.float_power(2, np.arange(0, 20.1, 1.0))
 
 # eval_time = 160
 # time_budget_test = 1760
@@ -135,3 +138,6 @@ results_df.to_csv(BASE_DIR / "eval_time_budget_HV.csv", index=False)
 
 
 
+# results_df = results_df[results_df["n_eval"] <= 1500]
+
+# results_df.to_csv(BASE_DIR / "eval_time_budget_HV.csv", index=False)

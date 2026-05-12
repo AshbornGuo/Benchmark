@@ -142,6 +142,119 @@ def compute_algo_hv_stats(csv_paths: list[Path], step: int) -> tuple[np.ndarray,
     return hv_mean, hv_std
 
 
+##### feasibility ratio  ####
+def compute_feasible_info(csv_path: Path):
+    df = pd.read_csv(csv_path, sep=";")
+
+    # 防止 is_feasible 被读成字符串
+    feasible = df["is_feasible"].astype(str).str.lower() == "true"
+
+    feasible_count = feasible.sum()
+    total = len(df)
+    feasible_rate = feasible_count / total
+
+    return feasible_rate, feasible_count, total
+
+
+def compute_algo_feasible_stats():
+    results = {}
+
+    for algo_name, paths in ALGO_CSVS.items():
+        rates = []
+        counts = []
+
+        for p in paths:
+            if not p.exists():
+                raise FileNotFoundError(p)
+
+            rate, count, total = compute_feasible_info(p)
+
+            rates.append(rate)
+            counts.append(count)
+
+        rates = np.array(rates, dtype=float)
+        counts = np.array(counts, dtype=float)
+
+        results[algo_name] = {
+            "per_seed_rate": rates,
+            "per_seed_count": counts,
+            "mean_rate": rates.mean(),
+            "std_rate": rates.std(),
+            "mean_count": counts.mean(),
+            "std_count": counts.std()
+        }
+
+    return results
+
+
+def export_feasible_table(stats):
+    rows = []
+
+    for algo, s in stats.items():
+        row = {
+            "Algorithm": algo,
+            "Feasibility Ratio": f"{s['mean_rate']:.3f} ± {s['std_rate']:.3f}",
+            "Feasible Count": f"{s['mean_count']:.0f} ± {s['std_count']:.0f}"
+        }
+
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    out_path = BASE_DIR / "Feasible_rate_summary.csv"
+    df.to_csv(out_path, index=False)
+
+    print(f"Saved: {out_path}")
+##### feasibility ratio  ####
+
+####统计HV  ##############
+def export_hv_summary_points(eval_points=(100, 200, 300, 400, 500), step=5):
+    result = []
+
+    for algo_name, paths in ALGO_CSVS.items():
+        hv_at_points_all_seeds = []
+
+        for p in paths:
+            feas_mask, F = read_res(p)
+            hv_curve = hv_analysis(F, feas_mask, step=step)
+
+            hv_at_points = []
+            for e in eval_points:
+                if e % step != 0:
+                    raise ValueError(f"{e} 不能被 step={step} 整除")
+
+                idx = e // step - 1
+
+                if idx < len(hv_curve):
+                    hv_at_points.append(hv_curve[idx])
+                else:
+                    hv_at_points.append(np.nan)
+
+            hv_at_points_all_seeds.append(hv_at_points)
+
+        hv_at_points_all_seeds = np.array(hv_at_points_all_seeds, dtype=float)
+
+        hv_mean = np.nanmean(hv_at_points_all_seeds, axis=0)
+        hv_std = np.nanstd(hv_at_points_all_seeds, axis=0)
+
+        row = {"Algorithm": algo_name}
+        for e, m, s in zip(eval_points, hv_mean, hv_std):
+            row[f"{e}"] = f"{m:.6f} ± {s:.6f}"
+
+        result.append(row)
+
+    df = pd.DataFrame(result)
+
+    out_csv = BASE_DIR / "HV_summary_100_500.csv"
+    df.to_csv(out_csv, index=False)
+
+    print(df)
+    print(f"Saved: {out_csv}")
+
+####统计HV  ##############
+
+
+
 ALGO_CSVS = {
     "RandomSearch": [
         BASE_DIR / "random_search" / "TurbofanArch_randomsearch_seed331.csv",
@@ -161,11 +274,11 @@ ALGO_CSVS = {
         BASE_DIR / "NSGA2" / "TurbofanArch_NSGA2_seed333.csv",
     ],
 
-    "MOEAD": [
-        BASE_DIR / "MOEAD" / "TurbofanArch_MOEAD_seed331.csv",
-        BASE_DIR / "MOEAD" / "TurbofanArch_MOEAD_seed332.csv",
-        BASE_DIR / "MOEAD" / "TurbofanArch_MOEAD_seed333.csv",
-    ],
+    # "MOEAD": [
+    #     BASE_DIR / "MOEAD" / "TurbofanArch_MOEAD_seed331.csv",
+    #     BASE_DIR / "MOEAD" / "TurbofanArch_MOEAD_seed332.csv",
+    #     BASE_DIR / "MOEAD" / "TurbofanArch_MOEAD_seed333.csv",
+    # ],
 
     "SMSEMOA": [
         BASE_DIR / "SMS_EMOA" / "TurbofanArch_SMSEMOA_seed331.csv",
@@ -200,6 +313,19 @@ step = 5
 plt.figure(figsize=(7, 4.5))
 stats = {}
 
+
+color_map = {
+    "RandomSearch": "#706E6E",  
+    "EGBO": "#8c564b",          
+    "NSGA2": "#1f77b4",         
+    "MOEAD": "#9467bd",         
+    "SMSEMOA": "#d62728",       
+    "EHVI": "#2ca02c",          
+    "ParEGO": "#ff7f0e",        
+    "MESMO": "#17becf",         
+}
+
+
 for algo_name, paths in ALGO_CSVS.items():
     missing = [p for p in paths if not p.exists()]
     if missing:
@@ -219,15 +345,18 @@ for algo_name, (hv_mean, hv_std) in stats.items():
     hv_lower_plot = np.insert(hv_lower, 0, 0.0)
     hv_upper_plot = np.insert(hv_upper, 0, 0.0)
     
-    plt.plot(x_plot, hv_mean_plot, label=algo_name)
-    plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20)
+    # plt.plot(x_plot, hv_mean_plot, label=algo_name)
+    # plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20)
 
-    # plt.plot(x, hv_mean, label=algo_name)
-    # plt.fill_between(x, hv_lower, hv_upper, alpha=0.20)
+    color = color_map.get(algo_name, None)
+
+    plt.plot(x_plot, hv_mean_plot, label=algo_name, color=color)
+    plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20, color=color)
+
 
 plt.xlabel("Evaluations")
 plt.ylabel("Hypervolume")
-plt.title("Hypervolume Comparison")
+# plt.title("Hypervolume Comparison")
 plt.legend(
     loc="upper center",
     bbox_to_anchor=(0.5, -0.15),
@@ -289,7 +418,7 @@ def export_hv_table(start_eval=55, end_eval=500, step=5):
         "ParEGO",
         "MESMO",
         "NSGA2",
-        "MOEAD",
+        # "MOEAD",
         "SMSEMOA",
         "EGBO",
         "RandomSearch"
@@ -304,3 +433,28 @@ def export_hv_table(start_eval=55, end_eval=500, step=5):
 
 
 export_hv_table(start_eval=55, end_eval=500, step=5)
+
+###############打印可行率
+##### 打印 + 导出 #####
+
+stats = compute_algo_feasible_stats()
+
+for algo, s in stats.items():
+    print(f"\n=== {algo} ===")
+
+    for i in range(len(s["per_seed_rate"])):
+        print(
+            f"seed{i+1}: "
+            f"rate = {s['per_seed_rate'][i]:.4f}, "
+            f"count = {s['per_seed_count'][i]:.0f}"
+        )
+
+    print(f"mean rate  : {s['mean_rate']:.4f}")
+    print(f"std rate   : {s['std_rate']:.4f}")
+    print(f"mean count : {s['mean_count']:.0f}")
+    print(f"std count  : {s['std_count']:.0f}")
+
+export_feasible_table(stats)
+
+
+export_hv_summary_points(eval_points=(100, 200, 300, 400, 500), step=5)

@@ -43,12 +43,16 @@ algo_names = data.columns.tolist()
 
 ##########
 
-eval_time_variation = np.float_power(2, np.arange(-13, 17, 1.5))
-time_budget_list = np.float_power(2, np.arange(-11, 17, 1.5))
+# eval_time_variation = np.float_power(2, np.arange(-13, 17, 1.5))
+# time_budget_list = np.float_power(2, np.arange(-11, 17, 1.5))
+eval_time_variation = np.float_power(2, np.arange(-3, 17.1, 1.0))
+time_budget_list = np.float_power(2, np.arange(0, 20.1, 1.0))
 
-eval_time = 160
-time_budget_test = 1760
-algo_name = 'RandomSearch'
+
+
+# eval_time = 160
+# time_budget_test = 1760
+# algo_name = 'RandomSearch'
 
 def num(time_df, algo_name, eval_time, time_budget):
     init_eval = 50
@@ -103,12 +107,12 @@ def get_hv(hv_df, algo_name, n_eval):
 results = []
 
 
-n_eval = num(time_df, algo_name, eval_time, time_budget_test)
+# n_eval = num(time_df, algo_name, eval_time, time_budget_test)
 
-hv_value = get_hv(hv_df, algo_name, n_eval)
+# hv_value = get_hv(hv_df, algo_name, n_eval)
 
-print("n_eval:", n_eval)
-print("HV:", hv_value)
+# print("n_eval:", n_eval)
+# print("HV:", hv_value)
 
 
 results = []

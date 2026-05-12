@@ -1,0 +1,5 @@
+Algorithm,Feasibility Ratio,Feasible Count
+EGBO,0.010 ± 0.013,16 ± 19
+NSGA2,0.259 ± 0.021,388 ± 32
+SMSEMOA,0.250 ± 0.021,374 ± 31
+ParEGO,0.015 ± 0.008,23 ± 12

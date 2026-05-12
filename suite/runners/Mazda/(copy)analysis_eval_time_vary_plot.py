@@ -7,7 +7,7 @@ import matplotlib as mpl
 # =====================
 # Paths
 # =====================
-BASE_DIR = Path.cwd() / "results" / "LayeredBeam"
+BASE_DIR = Path.cwd() / "results" / "mazda"
 
 results_df = pd.read_csv(BASE_DIR / "eval_time_budget_HV.csv")
 hv_df = pd.read_csv(BASE_DIR / "HV_all.csv")
@@ -24,52 +24,10 @@ global_min = data.to_numpy().min()
 # =====================
 valid_df = results_df.dropna(subset=["HV"]).copy()
 
-
-# ################# 不画超过 500 evaluations 的点##############
-# valid_df = valid_df[valid_df["n_eval"] <= 500]
-
-
-##########  n_eval <= 500 的点；每个 time_budget + algo 下，第一个刚超过 500 的点  ###########
-
-limit = 500
-
-valid_df = valid_df.sort_values(["time_budget", "eval_time"], ascending=[True, False])
-
-valid_df["over_limit"] = valid_df["n_eval"] > limit
-
-valid_df["first_over_limit"] = (
-    valid_df
-    .groupby(["time_budget", "algo"])["over_limit"]
-    .transform(lambda x: x & ~x.shift(fill_value=False).cummax())
-)
-
-valid_df = valid_df[
-    (valid_df["n_eval"] <= limit) |
-    (valid_df["first_over_limit"])
-].copy()
-##########  n_eval <= 500 的点；每个 time_budget + algo 下，第一个刚超过 500 的点  ###########
-
-
-# # =====================
-# # 2) 每个 (budget, eval_time) 只保留 HV 最大的算法
-# # 这里是没有做特别处理的，算法HV值相等时，按list里算法出现的先手顺序显示
-# idx = valid_df.groupby(["time_budget", "eval_time"])["HV"].idxmax()
-# best_df = valid_df.loc[idx].copy()
-
-
-# 如果 HV 相等，并且 RandomSearch 在并列第一里，则优先选择 RandomSearch
-valid_df["tie_priority"] = (valid_df["algo"] != "RandomSearch").astype(int)
-
-best_df = (
-    valid_df
-    .sort_values(["time_budget", "eval_time", "HV", "tie_priority"],
-                 ascending=[True, True, False, True])
-    .groupby(["time_budget", "eval_time"], as_index=False)
-    .first()
-)
-
-
-
+# =====================
+# 2) 每个 (budget, eval_time) 只保留 HV 最大的算法
+idx = valid_df.groupby(["time_budget", "eval_time"])["HV"].idxmax()
+best_df = valid_df.loc[idx].copy()
 
 # =====================
 # Marker style
@@ -86,10 +44,11 @@ marker_map = {
     "SMSEMOA": "D",
     "EHVI": "^",
     "ParEGO": "*",
-    "MESMO": "v",
-    "EGBO": "X",
+    "MESMO": "1",
+    "EGBO": ".",
 }
-default_marker = "x"
+default_marker = "X"
+
 
 
 # =====================
@@ -123,7 +82,7 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_xlabel("Time budget (s)")
 ax.set_ylabel("Evaluation time (s)")
-# ax.set_title("Best Algorithm for Each (Budget, Evaluation Time) Setting")
+ax.set_title("Best Algorithm for Each (Budget, Evaluation Time) Setting")
 
 ax.grid(True, which="major", alpha=0.25, linewidth=0.8)
 ax.grid(True, which="minor", alpha=0.10, linewidth=0.5)
@@ -138,10 +97,10 @@ cb.update_ticks()
 
 # legend
 leg = ax.legend(
-    # title="Winner algorithm",
+    title="Winner algorithm",
     loc="upper center",
-    bbox_to_anchor=(0.5, -0.18),
-    ncol=4,
+    bbox_to_anchor=(0.5, -0.16),
+    ncol=min(len(algo_names), 4),
     frameon=True,
     fancybox=True,
     columnspacing=1.4,

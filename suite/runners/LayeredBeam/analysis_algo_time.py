@@ -32,7 +32,7 @@ def read_moead_algorithm_time(path_seed: Path, path_gen: Path) -> np.ndarray:
         if len(block) < 5:
             break
 
-        eval_batch_time = np.max(block)
+        eval_batch_time = np.mean(block)
         algo_time = gen_times[g] - eval_batch_time
 
         result.append(algo_time)
@@ -277,6 +277,17 @@ eval_axis = np.arange(
 )
 
 
+color_map = {
+    "RandomSearch": "#706E6E",  
+    "EGBO": "#8c564b",          
+    "NSGA2": "#1f77b4",         
+    "MOEAD": "#9467bd",         
+    "SMSEMOA": "#d62728",       
+    "EHVI": "#2ca02c",          
+    "ParEGO": "#ff7f0e",        
+    "MESMO": "#17becf",         
+}
+
 for algo_name, (time_mean, time_std) in stats.items():
     T = len(time_mean)
     x = np.arange(start_row, start_row + T * sample_step, sample_step)
@@ -286,13 +297,18 @@ for algo_name, (time_mean, time_std) in stats.items():
     lower = np.maximum(time_mean - time_std, eps)
     upper = np.maximum(time_mean + time_std, eps)
 
-    plt.plot(x, time_mean_plot, label=f"{algo_name}")
-    plt.fill_between(x, lower, upper, alpha=0.20)
+    # plt.plot(x, time_mean_plot, label=f"{algo_name}", color=color)
+    # plt.fill_between(x, lower, upper, alpha=0.20, color=color)
+
+    color = color_map.get(algo_name, None)
+
+    plt.plot(x, time_mean_plot, label=f"{algo_name}", color=color)
+    plt.fill_between(x, lower, upper, alpha=0.20, color=color)
 
 plt.yscale("log")
 plt.xlabel("Evaluations")
-plt.ylabel("Algorithm Time (s)")
-plt.title("Algorithm Time Comparison")
+plt.ylabel("Algorithm Runtime (s)")
+# plt.title("Algorithm Time Comparison")
 # plt.legend()
 
 # plt.legend(

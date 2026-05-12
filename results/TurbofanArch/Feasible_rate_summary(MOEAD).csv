@@ -1,0 +1,9 @@
+Algorithm,Feasibility Ratio,Feasible Count
+RandomSearch,0.003 ± 0.001,2 ± 0
+EGBO,0.049 ± 0.030,25 ± 15
+NSGA2,0.075 ± 0.060,37 ± 30
+MOEAD,0.001 ± 0.001,0 ± 0
+SMSEMOA,0.066 ± 0.049,33 ± 25
+EHVI,0.006 ± 0.006,3 ± 3
+ParEGO,0.048 ± 0.004,24 ± 2
+MESMO,0.016 ± 0.014,8 ± 7

@@ -75,54 +75,61 @@ def compute_algo_hv_stats(csv_paths: list[Path], step: int) -> tuple[np.ndarray,
     hv_std = np.nanstd(hv_mat, axis=0)
     return hv_mean, hv_std
 
+##### feasibility ratio  ####
+def compute_feasible_rate(csv_path: Path) -> float:
+    df = pd.read_csv(csv_path, sep=";")
+    feasible_count = df["is_feasible"].sum()   # True 会当作 1
+    total = len(df)
+    return feasible_count / total
 
-####统计HV  ##############
-def export_hv_summary_points(eval_points=(100, 200, 300, 400, 500), step=5):
-    result = []
+
+def compute_algo_feasible_stats():
+    results = {}
 
     for algo_name, paths in ALGO_CSVS.items():
-        hv_at_points_all_seeds = []
+        rates = []
 
         for p in paths:
-            F = read_res(p)
-            hv_curve = hv_analysis(F, step=step)
+            if not p.exists():
+                raise FileNotFoundError(p)
 
-            hv_at_points = []
-            for e in eval_points:
-                if e % step != 0:
-                    raise ValueError(f"{e} 不能被 step={step} 整除")
+            r = compute_feasible_rate(p)
+            rates.append(r)
 
-                idx = e // step - 1
+        rates = np.array(rates)
 
-                if idx < len(hv_curve):
-                    hv_at_points.append(hv_curve[idx])
-                else:
-                    hv_at_points.append(np.nan)
+        results[algo_name] = {
+            "per_seed": rates,
+            "mean": rates.mean(),
+            "std": rates.std()
+        }
 
-            hv_at_points_all_seeds.append(hv_at_points)
+    return results
 
-        hv_at_points_all_seeds = np.array(hv_at_points_all_seeds, dtype=float)
 
-        hv_mean = np.nanmean(hv_at_points_all_seeds, axis=0)
-        hv_std = np.nanstd(hv_at_points_all_seeds, axis=0)
+def export_feasible_table(stats):
+    rows = []
 
-        row = {"Algorithm": algo_name}
-        for e, m, s in zip(eval_points, hv_mean, hv_std):
-            # row[f"{e}_mean"] = m
-            # row[f"{e}_std"] = s
-            row[f"{e}"] = f"{m:.6f} ± {s:.6f}"
+    for algo, s in stats.items():
+        row = {
+            "Algorithm": algo,
+            "Mean": s["mean"],
+            "Std": s["std"]
+        }
 
-        result.append(row)
+        for i, r in enumerate(s["per_seed"]):
+            row[f"Seed{i+1}"] = r
 
-    df = pd.DataFrame(result)
+        rows.append(row)
 
-    out_csv = BASE_DIR / "HV_summary_100_500.csv"
-    df.to_csv(out_csv, index=False)
+    df = pd.DataFrame(rows)
 
-    print(df)
-    print(f"Saved: {out_csv}")
+    out_path = BASE_DIR / "Feasible_rate.csv"
+    df.to_csv(out_path, index=False)
 
-####统计HV  ##############
+    print(f"Saved: {out_path}")
+##### feasibility ratio  ####
+
 
 # =========================
 # 在这里把“不同算法”的 CSV 路径都列出来
@@ -190,28 +197,6 @@ plt.figure(figsize=(7, 4.5))
 global_max_T = 0
 stats = {}
 
-# color_map = {
-#     "RandomSearch": "#5D5D5D",  # black
-#     "EGBO": "#6a453e",          # brown
-#     "NSGA2": "#ddd200",         # blue
-#     "MOEAD": "#843dc6",         # purple
-#     "SMSEMOA": "#cc0202",       # red
-#     "EHVI": "#2ca02c",          # green
-#     "ParEGO": "#d36504",        # orange
-#     "MESMO": "#17becf",         # cyan
-# }
-
-color_map = {
-    "RandomSearch": "#706E6E",  
-    "EGBO": "#8c564b",          
-    "NSGA2": "#1f77b4",         
-    "MOEAD": "#9467bd",         
-    "SMSEMOA": "#d62728",       
-    "EHVI": "#2ca02c",          
-    "ParEGO": "#ff7f0e",        
-    "MESMO": "#17becf",         
-}
-
 for algo_name, paths in ALGO_CSVS.items():
     # 防呆：路径不存在就直接报清楚
     missing = [p for p in paths if not p.exists()]
@@ -236,19 +221,15 @@ for algo_name, (hv_mean, hv_std) in stats.items():
     hv_lower_plot = np.insert(hv_lower, 0, 0.0)
     hv_upper_plot = np.insert(hv_upper, 0, 0.0)
     
-    # plt.plot(x_plot, hv_mean_plot, label=algo_name)
-    # plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20)
+    plt.plot(x_plot, hv_mean_plot, label=algo_name)
+    plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20)
 
-    color = color_map.get(algo_name, None)
-
-    plt.plot(x_plot, hv_mean_plot, label=algo_name, color=color)
-    plt.fill_between(x_plot, hv_lower_plot, hv_upper_plot, alpha=0.20, color=color)
-
-
+    # plt.plot(x, hv_mean, label=f"{algo_name}")
+    # plt.fill_between(x, hv_lower, hv_upper, alpha=0.20)
 
 plt.xlabel("Evaluations")
 plt.ylabel("Hypervolume")
-# plt.title("Hypervolume Comparison")
+plt.title("Hypervolume Comparison")
 # plt.legend()
 
 plt.legend(
@@ -264,7 +245,7 @@ plt.legend(
 #     frameon=True
 # )
 
-
+plt.tight_layout(rect=[0, 0, 0.82, 1])
 
 plt.grid(True)
 plt.tight_layout()
@@ -340,4 +321,15 @@ def export_hv_table(start_eval=55, end_eval=500, step=5):
 export_hv_table(start_eval=55, end_eval=500, step=5)
 
 
-export_hv_summary_points(eval_points=(100, 200, 300, 400, 500), step=5)
+
+###############打印可行率
+stats = compute_algo_feasible_stats()
+
+for algo, s in stats.items():
+    print(f"\n=== {algo} ===")
+    for i, r in enumerate(s["per_seed"]):
+        print(f"seed{i+1}: {r:.4f}")
+    print(f"mean : {s['mean']:.4f}")
+    print(f"std  : {s['std']:.4f}")
+
+export_feasible_table(stats)

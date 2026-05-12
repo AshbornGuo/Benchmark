@@ -46,7 +46,7 @@ LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_MOEAD_seed{seed}.csv")
 
 # =========================
 # 读取设计变量范围
-# =========================
+
 def dv_range(df_path) -> list:
     decision_variable = pd.read_excel(df_path)
     volume_lists = []
