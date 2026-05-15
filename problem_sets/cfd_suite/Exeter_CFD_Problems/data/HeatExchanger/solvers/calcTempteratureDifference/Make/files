@@ -1,4 +1,0 @@
-
-calcTemperatureDifference.C
-
-EXE = $(FOAM_USER_APPBIN)/calcTemperatureDifference

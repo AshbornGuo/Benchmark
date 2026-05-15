@@ -1,4 +1,0 @@
-
-calcPressureDifference.C
-
-EXE = $(FOAM_USER_APPBIN)/calcPressureDifference

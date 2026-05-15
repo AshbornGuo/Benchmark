@@ -1,5 +1,0 @@
-#!/bin/sh
-
-wmake libso cylindricalInletVelocity_updated
-wmake simpleFoam_cp_zeta
-wmake calcPressureDifference
