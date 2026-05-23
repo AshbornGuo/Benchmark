@@ -238,7 +238,7 @@ if __name__ == "__main__":
     # Load DV ranges
     dv = dv_range(PATH_CON)
     d = len(dv)
-    print(f"[Info] #decision vars = {d}")
+    # print(f"[Info] #decision vars = {d}")
 
     # Bounds for normalization
     lb = torch.tensor([min(v) for v in dv], dtype=torch.float32)
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     )
 
     t_RE = time.perf_counter()
-    print(f"[Init] done {num_random_sample} evals in {t_RE - t_RS:.3f}s")
+    # print(f"[Init] done {num_random_sample} evals in {t_RE - t_RS:.3f}s")
 
     # Build initial train tensors
     train_X_list = []
@@ -380,10 +380,10 @@ if __name__ == "__main__":
                 writer = csv.writer(f, delimiter=";")
                 writer.writerow([eval_id, obj_original, is_feasible, vars_one, con_raw, eval_time, alg_time, workdir])
 
-        print(f"[BO-continuous] evals={train_X.shape[0]}/{TOTAL_BUDGET}  (last batch q={q_now}, alg_time={alg_time:.3f}s)")
+    #     print(f"[BO-continuous] evals={train_X.shape[0]}/{TOTAL_BUDGET}  (last batch q={q_now}, alg_time={alg_time:.3f}s)")
 
-    print(f"[Done] Total evaluations: {train_X.shape[0]}")
-    print(f"[Done] Log saved: {LOG_CSV}")
+    # print(f"[Done] Total evaluations: {train_X.shape[0]}")
+    # print(f"[Done] Log saved: {LOG_CSV}")
 
 
 

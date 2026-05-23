@@ -98,7 +98,8 @@ class LayeredBeamProblem(ElementwiseProblem):
         super().__init__(
             n_var=dim,
             n_obj=2,
-            n_constr=1,
+            n_constr=0,
+            # n_constr=1,
             xl=np.full(dim, low, dtype=float),
             xu=np.full(dim, high, dtype=float),
             
@@ -116,7 +117,7 @@ class LayeredBeamProblem(ElementwiseProblem):
 
         
         out["F"] = np.array([mass, intrusion], dtype=float)
-        out["G"] = np.array([intrusion - 50.0], dtype=float)
+        # out["G"] = np.array([intrusion - 50.0], dtype=float)
 
         
         out["X"] = x_list
@@ -125,9 +126,10 @@ class LayeredBeamProblem(ElementwiseProblem):
         with open(self.log_csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter=";")
             intrusion = float(objs[1])
-            is_feasible = intrusion <= 50
+            # is_feasible = intrusion <= 50
 
-            writer.writerow([objs, is_feasible, x_list, eval_time])
+            writer.writerow([objs,  x_list, eval_time])
+            # writer.writerow([objs, is_feasible, x_list, eval_time])
 
     
 if __name__ == "__main__":
@@ -135,7 +137,8 @@ if __name__ == "__main__":
         shutil.rmtree(RUN_ROOT)
     RUN_ROOT.mkdir(parents=True, exist_ok=True)
 
-    columns = ["objectives",  "is_feasible", "variables", "evaluation_time"]
+    columns = ["objectives",  "variables", "evaluation_time"]
+    # columns = ["objectives",  "is_feasible", "variables", "evaluation_time"]
     pd.DataFrame(columns=columns).to_csv(LOG_CSV, index=False, sep=";")
 
     runner = JoblibParallelization(n_jobs=5, backend="loky")

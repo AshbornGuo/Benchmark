@@ -61,10 +61,6 @@ raw_samples = 128
 maxiter = 100  
 
 
-# PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/LayeredBeam/qLogNParEGO"
-# os.makedirs(PATH_RESULT, exist_ok=True)
-
-# LOG_CSV = os.path.join(PATH_RESULT, f"LayeredBeam_qLogNParEGO_seed{seed}.csv")
 
 
 RESULT_ROOT = PROJECT_ROOT / "results" / "LayeredBeam" / "qLogNParEGO"
@@ -164,7 +160,6 @@ def init_csv(log_csv):
             w = csv.writer(f, delimiter=";")
             w.writerow([
                 "objectives",
-                "is_feasible",
                 "variables",   
                 "evaluation_time",
                 "algorithm_time",
@@ -176,13 +171,9 @@ def append_rows(log_csv, rows):
     with open(log_csv, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f, delimiter=";")
         for r in rows:
-            intrusion = r["objs_original"][1]   
-            is_feasible = intrusion <= 50       
-
-
+            intrusion = r["objs_original"][1]      
             w.writerow([
                 r["objs_original"],
-                is_feasible,
                 r["x"],
                 r["eval_time"],
                 r.get("alg_time", None),
@@ -252,7 +243,6 @@ if __name__ == "__main__":
                     sampler=sampler,
                     prune_baseline=True,
                     objective=IdentityMCMultiOutputObjective(outcomes=[0, 1]),
-                    constraints=[lambda Y: (-50.0 - Y[..., 1])],
                 )
             )
 

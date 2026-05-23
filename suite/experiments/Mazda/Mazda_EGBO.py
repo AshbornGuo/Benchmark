@@ -46,17 +46,6 @@ MC_SAMPLES = 16
 GP_MAXITER = 50
 EXE_TIMEOUT = 60
 
-# Paths
-# PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
-# PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
-# PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/SBO_EGBO"
-
-# os.makedirs(PATH_RESULT, exist_ok=True)
-# LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_EGBO_seed{seed}.csv")
-
-# # Per-eval isolated workdirs (parallel-safe)
-# RUN_ROOT = Path(PATH_RESULT) / "runs" / "MAZDA_EGBO"
-# RUN_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

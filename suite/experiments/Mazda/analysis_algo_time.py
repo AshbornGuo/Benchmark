@@ -322,14 +322,8 @@ out_path.parent.mkdir(parents=True, exist_ok=True)
 plt.savefig(out_path, dpi=300, bbox_inches="tight")
 plt.close()
 
-print(f"Saved: {out_path}")
 
 
-print("\n algo_names:", algo_names)
-print("\n algo_time_means:", algo_time_means)
-print("\n eval_axis:", eval_axis)
-
-import pandas as pd
 
 
 df = pd.DataFrame({name: values for name, values in zip(algo_names, algo_time_means)})
@@ -341,7 +335,7 @@ df.insert(0, "eval_axis", eval_axis)
 csv_path = BASE_DIR / "algo_time_all.csv"
 df.to_csv(csv_path, index=False)
 
-# print("Saved:", csv_path)
+
 
 
 

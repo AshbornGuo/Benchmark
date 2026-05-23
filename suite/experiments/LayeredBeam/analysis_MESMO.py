@@ -45,7 +45,6 @@ def read_res(PATH_RESULT):
 
 
 
-
 def hypervolume(F):
     if F is None or len(F) == 0:
         return 0.0
@@ -85,7 +84,7 @@ hv_MESMO_332 = hv_analysis(Fnor_MESMO_332, step)
 hv_MESMO_333 = hv_analysis(Fnor_MESMO_333, step)
 
 
-# take average
+# take average 
 hv_runs = [hv_MESMO_331, hv_MESMO_332, hv_MESMO_333] 
 hv_runs = np.array(hv_runs) 
 hv_mean = hv_runs.mean(axis=0)

@@ -87,7 +87,7 @@ hv_qLogNEHVI_333 = hv_analysis(Fnor_qLogNEHVI_333, step)
 
 
 # take average
-hv_runs = [hv_qLogNEHVI_331, hv_qLogNEHVI_332, hv_qLogNEHVI_333]  # 每个是长度 T 的 list
+hv_runs = [hv_qLogNEHVI_331, hv_qLogNEHVI_332, hv_qLogNEHVI_333]  
 hv_runs = np.array(hv_runs)   # shape: (5, T)
 hv_mean = hv_runs.mean(axis=0)
 hv_std = hv_runs.std(axis=0)

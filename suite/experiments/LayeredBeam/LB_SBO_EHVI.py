@@ -22,7 +22,7 @@ from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.optim import optimize_acqf
 
-# Paths / imports 
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]   # python3_11_test/
 MECHBENCH_ROOT = PROJECT_ROOT / "problem_sets" / "MECHBench"
 sys.path.insert(0, str(MECHBENCH_ROOT))
@@ -124,7 +124,7 @@ def eval_batch(X_np: np.ndarray, n_jobs: int):
     )
     return results
 
-# Normalization helpers
+
 LOW = torch.full((dim,), low, dtype=dtype, device=device)
 HIGH = torch.full((dim,), high, dtype=dtype, device=device)
 RNG = (HIGH - LOW).clamp_min(1e-12)
@@ -141,7 +141,6 @@ def unnorm_X(Xn: torch.Tensor) -> torch.Tensor:
 def make_ref_point(Y: torch.Tensor) -> torch.Tensor:
     """
     Y: (n, 2) in max-space.
-    ref_point should be dominated by (worse than) all good points.
     A simple safe choice: min(Y, dim=0) - margin
     """
     y_min = Y.min(dim=0).values
@@ -155,7 +154,7 @@ def init_csv(log_csv):
             w = csv.writer(f, delimiter=";")
             w.writerow([
                 "objectives",
-                "is_feasible",
+                # "is_feasible",
                 "variables",   
                 "evaluation_time",
                 "algorithm_time",
@@ -167,12 +166,10 @@ def append_rows(log_csv, rows):
         w = csv.writer(f, delimiter=";")
         for r in rows:
             intrusion = r["objs_original"][1]   
-            is_feasible = intrusion <= 50       
-
-
+    
             w.writerow([
                 r["objs_original"],
-                is_feasible,
+
                 r["x"],
                 r["eval_time"],
                 r.get("alg_time", None),
@@ -227,11 +224,8 @@ if __name__ == "__main__":
         mll = SumMarginalLogLikelihood(model.likelihood, model)
         fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 50}})
 
-        # ref point in max-space 
-        feas_mask = train_Y[:, 1] >= -50.0           # y2 = -intrusion  -> intrusion<=50  <=> y2>=-50
-        Y_feas = train_Y[feas_mask]
 
-        ref_point = make_ref_point(Y_feas if Y_feas.numel() > 0 else train_Y)
+        ref_point = make_ref_point(train_Y)
 
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
 
@@ -242,7 +236,6 @@ if __name__ == "__main__":
             sampler=sampler,
             prune_baseline=True,
             objective=IdentityMCMultiOutputObjective(outcomes=[0, 1]),
-            constraints=[lambda Y: (-50.0 - Y[..., 1])],  # intrusion<=50 
         )
 
         # determine batch size for this round 

@@ -11,7 +11,6 @@ joblib
 psutil==7.0.0
 gmsh==4.15
 
-
 torch
 gpytorch 
 botorch

@@ -1,4 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor, as_completed  # Python 标准并行库
+from concurrent.futures import ProcessPoolExecutor, as_completed  
 import platform
 import time
 import sys
@@ -72,7 +72,7 @@ LOG_CSV = RESULT_ROOT / f"LayeredBeam_RS_seed{seed}.csv"
 
 columns = [
     "objectives",
-    "is_feasible",   
+    # "is_feasible",   
     "variables",
     "evaluation_time",
 ]
@@ -150,12 +150,13 @@ if __name__ == "__main__":
             res = fut.result()
 
             intrusion = res["out"][1]          
-            is_feasible = intrusion <= 50     
+            # is_feasible = intrusion <= 50     
 
 
             with open(LOG_CSV, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f, delimiter=";")
-                writer.writerow([res["out"], is_feasible, vec, res['time'],])
+                writer.writerow([res["out"],  vec, res['time'],])
+                # writer.writerow([res["out"], is_feasible, vec, res['time'],])
 
 
 

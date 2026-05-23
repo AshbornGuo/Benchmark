@@ -32,7 +32,7 @@ population_size = 50
 num_eval = 500
 n_jobs = 5
 
-penalty = 1e1
+# penalty = 1e1
 
 dim = 10
 low, high = -5, 5
@@ -103,7 +103,8 @@ class LayeredBeamProblem(ElementwiseProblem):
         super().__init__(
             n_var=dim,
             n_obj=2,
-            n_constr=1,
+            n_constr=0,
+            # n_constr=1,
             xl=np.full(dim, low, dtype=float),
             xu=np.full(dim, high, dtype=float),
             **kwargs
@@ -121,8 +122,8 @@ class LayeredBeamProblem(ElementwiseProblem):
 
         out["F"] = np.array([mass, intrusion], dtype=float)
 
-        # intrusion <= 50  ->  intrusion - 50 <= 0
-        out["G"] = np.array([intrusion - 50.0], dtype=float)
+        # # intrusion <= 50  ->  intrusion - 50 <= 0
+        # out["G"] = np.array([intrusion - 50.0], dtype=float)
 
         out["X"] = x_list
         out["evaluation_time"] = float(eval_time)
@@ -130,42 +131,43 @@ class LayeredBeamProblem(ElementwiseProblem):
         # CSV logging
         with open(self.log_csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, delimiter=";")
-            is_feasible = intrusion <= 50.0
-            writer.writerow([objs, is_feasible, x_list, eval_time])
+            # is_feasible = intrusion <= 50.0
+            # writer.writerow([objs, is_feasible, x_list, eval_time])
+            writer.writerow([objs, x_list, eval_time])
 
 
-class ConstraintsAsPenaltyMOO(Problem):
+# class ConstraintsAsPenaltyMOO(Problem):
 
-    def __init__(self, problem, penalty: float):
-        super().__init__(
-            n_var=problem.n_var,
-            n_obj=problem.n_obj,
-            n_constr=0,          
-            xl=problem.xl,
-            xu=problem.xu
-        )
-        self.problem = problem
-        self.penalty = float(penalty)
+#     def __init__(self, problem, penalty: float):
+#         super().__init__(
+#             n_var=problem.n_var,
+#             n_obj=problem.n_obj,
+#             n_constr=0,          
+#             xl=problem.xl,
+#             xu=problem.xu
+#         )
+#         self.problem = problem
+#         self.penalty = float(penalty)
 
-    def _evaluate(self, X, out, *args, **kwargs):
-        _out = self.problem.evaluate(
-            X,
-            return_values_of=["F", "G"],
-            return_as_dictionary=True,
-            **kwargs
-        )
+#     def _evaluate(self, X, out, *args, **kwargs):
+#         _out = self.problem.evaluate(
+#             X,
+#             return_values_of=["F", "G"],
+#             return_as_dictionary=True,
+#             **kwargs
+#         )
 
-        F = _out["F"]                           # (n, n_obj)
-        G = _out.get("G", None)                 # (n, n_constr) or None
+#         F = _out["F"]                           # (n, n_obj)
+#         G = _out.get("G", None)                 # (n, n_constr) or None
 
-        if G is None:
-            CV = np.zeros((F.shape[0],), dtype=float)
-        else:
-            G = np.atleast_2d(G)
-            CV = np.sum(np.maximum(G, 0.0), axis=1)   
+#         if G is None:
+#             CV = np.zeros((F.shape[0],), dtype=float)
+#         else:
+#             G = np.atleast_2d(G)
+#             CV = np.sum(np.maximum(G, 0.0), axis=1)   
 
-        # F_pen = F + penalty * CV
-        out["F"] = F + self.penalty * CV[:, None]
+#         # F_pen = F + penalty * CV
+#         out["F"] = F + self.penalty * CV[:, None]
 
 
 if __name__ == "__main__":
@@ -174,7 +176,8 @@ if __name__ == "__main__":
         shutil.rmtree(RUN_ROOT)
     RUN_ROOT.mkdir(parents=True, exist_ok=True)
 
-    columns = ["objectives", "is_feasible", "variables", "evaluation_time"]
+    columns = ["objectives", "variables", "evaluation_time"]
+    # columns = ["objectives", "is_feasible", "variables", "evaluation_time"]
     pd.DataFrame(columns=columns).to_csv(LOG_CSV, index=False, sep=";")
 
     runner = JoblibParallelization(n_jobs=n_jobs, backend="loky")
@@ -184,7 +187,7 @@ if __name__ == "__main__":
         elementwise_runner=runner
     )
 
-    problem_pen = ConstraintsAsPenaltyMOO(problem, penalty=penalty)
+    # problem_pen = ConstraintsAsPenaltyMOO(problem, penalty=penalty)
 
     ref_dirs = get_reference_directions(
         "das-dennis",
@@ -197,7 +200,8 @@ if __name__ == "__main__":
                       n_offsprings=n_jobs) 
 
     res = minimize(
-        problem_pen,                 
+        problem,                 
+        # problem_pen,                 
         algorithm,
         termination=("n_eval", num_eval),
         seed=seed,

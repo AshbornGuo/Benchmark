@@ -124,16 +124,16 @@ def eval_one_x(x_np: np.ndarray):
     y = np.array([-mass, -intrusion], dtype=np.double)
 
     # aggregated constraint violation: feasible iff cv <= 0
-    cv = max(0.0, intrusion - 50.0)
-    is_feasible = (cv <= 0.0)
+    # cv = max(0.0, intrusion - 50.0)
+    # is_feasible = (cv <= 0.0)
 
     return {
         "sim_id": sim_id,
         "x": x_list,
         "objs_original": [mass, intrusion],
         "y_max": y.tolist(),
-        "cv": float(cv),
-        "is_feasible": bool(is_feasible),
+        # "cv": float(cv),
+        # "is_feasible": bool(is_feasible),
         "eval_time": float(eval_time),
         "workdir": workdir,
     }
@@ -165,7 +165,7 @@ def init_csv(log_csv):
                 "objectives",
                 "objectives_maxspace",
                 "cv",
-                "is_feasible",
+                # "is_feasible",
                 "variables",
                 "evaluation_time",
                 "algorithm_time",
@@ -181,7 +181,7 @@ def append_rows(log_csv, rows):
                 r["objs_original"],
                 r["y_max"],
                 r["cv"],
-                r["is_feasible"],
+                # r["is_feasible"],
                 r["x"],
                 r["eval_time"],
                 r.get("alg_time", None),
@@ -205,9 +205,9 @@ def build_model(train_X_n: torch.Tensor, train_obj: torch.Tensor, train_cv: torc
     """
     m_obj1 = SingleTaskGP(train_X_n, train_obj[:, 0:1].contiguous())
     m_obj2 = SingleTaskGP(train_X_n, train_obj[:, 1:2].contiguous())
-    m_cv = SingleTaskGP(train_X_n, train_cv[:, 0:1].contiguous())
+    # m_cv = SingleTaskGP(train_X_n, train_cv[:, 0:1].contiguous())
 
-    model = ModelListGP(m_obj1, m_obj2, m_cv)
+    model = ModelListGP(m_obj1, m_obj2)
     mll = SumMarginalLogLikelihood(model.likelihood, model)
     return model, mll
 
@@ -226,7 +226,7 @@ def egbo_generate_batch(
     acq,
     train_X_n: torch.Tensor,
     train_obj: torch.Tensor,
-    train_cv: torch.Tensor,
+    # train_cv: torch.Tensor,
     q: int,
     d: int,
 ):
@@ -257,13 +257,13 @@ def egbo_generate_batch(
     pareto_mask = is_non_dominated(train_obj)
     pareto_x = train_X_n[pareto_mask]
     pareto_y = -train_obj[pareto_mask]   # pymoo minimizes
-    pareto_con = train_cv[pareto_mask]
+    # pareto_con = train_cv[pareto_mask]
 
     # fallback
     if pareto_x.shape[0] < 2:
         pareto_x = train_X_n
         pareto_y = -train_obj
-        pareto_con = train_cv
+        # pareto_con = train_cv
 
     algorithm = UNSGA3(
         pop_size=nsga_pop_size,
@@ -279,7 +279,7 @@ def egbo_generate_batch(
     pymooproblem = PymooProblem(
         n_var=d,
         n_obj=train_obj.shape[1],
-        n_constr=1,
+        n_constr=0,
         xl=np.zeros(d),
         xu=np.ones(d),
     )
@@ -292,7 +292,7 @@ def egbo_generate_batch(
 
     pop = algorithm.ask()
     pop.set("F", pareto_y.detach().cpu().numpy())
-    pop.set("G", pareto_con.detach().cpu().numpy())
+    # pop.set("G", pareto_con.detach().cpu().numpy())
     algorithm.tell(infills=pop)
 
     newpop = algorithm.ask()
@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
     train_X = torch.tensor([r["x"] for r in init_res], dtype=dtype, device=device)         # (n, d)
     train_obj = torch.tensor([r["y_max"] for r in init_res], dtype=dtype, device=device)   # (n, 2)
-    train_cv = torch.tensor([[r["cv"]] for r in init_res], dtype=dtype, device=device)     # (n, 1)
+    # train_cv = torch.tensor([[r["cv"]] for r in init_res], dtype=dtype, device=device)     # (n, 1)
 
     rows = []
     eval_id = 0
@@ -353,16 +353,18 @@ if __name__ == "__main__":
         train_X_n = norm_X(train_X)
 
         # fit GP models (2 objectives + 1 CV)
-        model, mll = build_model(train_X_n, train_obj, train_cv)
+        # model, mll = build_model(train_X_n, train_obj, train_cv)
+        model, mll = build_model(train_X_n, train_obj)
         fit_gpytorch_mll(
             mll,
             optimizer_kwargs={"options": {"maxiter": gp_maxiter}},
         )
 
         # ref point: use feasible points if any
-        feas_mask = (train_cv.view(-1) <= 0.0)
-        Y_feas = train_obj[feas_mask]
-        ref_point = make_ref_point(Y_feas if Y_feas.numel() > 0 else train_obj)
+        # feas_mask = (train_cv.view(-1) <= 0.0)
+        # Y_feas = train_obj[feas_mask]
+        # ref_point = make_ref_point(Y_feas if Y_feas.numel() > 0 else train_obj)
+        ref_point = make_ref_point(train_obj)
 
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
 
@@ -373,7 +375,7 @@ if __name__ == "__main__":
             sampler=sampler,
             prune_baseline=True,
             objective=IdentityMCMultiOutputObjective(outcomes=[0, 1]),
-            constraints=[lambda Z: Z[..., 2]],   # cv <= 0 feasible
+            # constraints=[lambda Z: Z[..., 2]],   # cv <= 0 feasible
         )
 
         q = min(batch_size, num_eval - eval_count)
@@ -383,7 +385,7 @@ if __name__ == "__main__":
             acq=acq,
             train_X_n=train_X_n,
             train_obj=train_obj,
-            train_cv=train_cv,
+            # train_cv=train_cv,
             q=q,
             d=dim,
         )
@@ -399,11 +401,11 @@ if __name__ == "__main__":
         # update dataset
         X_new = torch.tensor([r["x"] for r in res_list], dtype=dtype, device=device)
         Y_new = torch.tensor([r["y_max"] for r in res_list], dtype=dtype, device=device)
-        CV_new = torch.tensor([[r["cv"]] for r in res_list], dtype=dtype, device=device)
+        # CV_new = torch.tensor([[r["cv"]] for r in res_list], dtype=dtype, device=device)
 
         train_X = torch.cat([train_X, X_new], dim=0)
         train_obj = torch.cat([train_obj, Y_new], dim=0)
-        train_cv = torch.cat([train_cv, CV_new], dim=0)
+        # train_cv = torch.cat([train_cv, CV_new], dim=0)
 
         # log
         rows = []

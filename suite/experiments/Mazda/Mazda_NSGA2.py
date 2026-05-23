@@ -21,16 +21,7 @@ random_seed = 339
 population_size = 50
 num_eval = 1500
 
-# PATH_CON = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/Info_test.xlsx"
-# PATH_EXE = r"C:/Users/guoji/Desktop/python3_11_test/problem_sets/mazda_interface/mazda_mop.exe"
 
-# PATH_RESULT = r"C:/Users/guoji/Desktop/python3_11_test/results/mazda/NSGA2"
-# os.makedirs(PATH_RESULT, exist_ok=True)
-# LOG_CSV = os.path.join(PATH_RESULT, f"Mazda_NSGA2_seed{random_seed}.csv")
-
-
-# SCRIPT_DIR = Path(__file__).resolve().parent
-# RUN_ROOT = SCRIPT_DIR / "runs" / "MAZDA"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 

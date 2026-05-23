@@ -25,9 +25,7 @@ from botorch.utils.multi_objective.box_decompositions.dominated import Dominated
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.optim import optimize_acqf
 
-from botorch.acquisition.acquisition import AcquisitionFunction
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from torch.distributions import Normal
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]   # python3_11_test/
 MECHBENCH_ROOT = PROJECT_ROOT / "problem_sets" / "MECHBench"
@@ -168,7 +166,6 @@ def init_csv(log_csv):
             w = csv.writer(f, delimiter=";")
             w.writerow([
                 "objectives",
-                "is_feasible",
                 "variables",   
                 "evaluation_time",
                 "algorithm_time",
@@ -179,45 +176,17 @@ def append_rows(log_csv, rows):
     with open(log_csv, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f, delimiter=";")
         for r in rows:
-            intrusion = r["objs_original"][1]   
-            is_feasible = intrusion <= 50       
+            intrusion = r["objs_original"][1]        
 
 
             w.writerow([
                 r["objs_original"],
-                is_feasible,
+                # is_feasible,
                 r["x"],
                 r["eval_time"],
                 r.get("alg_time", None),
             ])
 
-class FeasibilityWeightedMESMO(AcquisitionFunction):
-    def __init__(self, mesmo_acq, constraint_model, threshold: float = 0.0):
-        """
-        g(x) ~ GP, feasible if g(x) >= threshold.
-        acq(x) = MESMO(x) * P(g(x) >= threshold)
-        """
-        super().__init__(model=mesmo_acq.model)
-        self.mesmo_acq = mesmo_acq
-        self.cmodel = constraint_model
-        self.threshold = float(threshold)
-        self.std_normal = Normal(0.0, 1.0)
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        v = self.mesmo_acq(X)  # shape: batch, e.g. (128,)
-
-        post = self.cmodel.posterior(X)
-        mean = post.mean.squeeze(-1)                       # (batch, q) e.g. (128,5)
-        var = post.variance.squeeze(-1).clamp_min(1e-12)   # (batch, q)
-        std = var.sqrt()
-
-        z = (mean - self.threshold) / std
-        p_point = self.std_normal.cdf(z).clamp(1e-6, 1.0)  # (batch, q)
-
-    
-        p_batch = p_point.prod(dim=-1)
-
-        return v * p_batch
     
 if __name__ == "__main__":
     # clean runs   
@@ -262,16 +231,8 @@ if __name__ == "__main__":
         mll = SumMarginalLogLikelihood(model.likelihood, model)
         fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 50}})
 
-        # Constraint GP: g(x)=50 - intrusion
-        train_C = (50.0 + train_Y[:, 1]).unsqueeze(-1)  # shape (n,1)
 
-        c_model = SingleTaskGP(Xn, train_C.contiguous())
-        c_mll = ExactMarginalLogLikelihood(c_model.likelihood, c_model)
-        fit_gpytorch_mll(c_mll, optimizer_kwargs={"options": {"maxiter": 50}})
-
-        # intrusion<=50 <=> y2=-intrusion >= -50
-        feas_mask = train_Y[:, 1] >= -50.0
-        Y_pool = train_Y[feas_mask] if feas_mask.any() else train_Y
+        Y_pool = train_Y
 
         nd_mask = is_non_dominated(Y_pool)
         pareto_Y = Y_pool[nd_mask]
@@ -282,7 +243,7 @@ if __name__ == "__main__":
 
 
         partitioning = DominatedPartitioning(ref_point=ref_point, Y=pareto_Y)
-        hypercell_bounds = partitioning.get_hypercell_bounds().unsqueeze(0)  # -> (1, 2, J, M)
+        hypercell_bounds = partitioning.get_hypercell_bounds().unsqueeze(0)  
 
 
         mesmo = qLowerBoundMultiObjectiveMaxValueEntropySearch(
@@ -292,8 +253,7 @@ if __name__ == "__main__":
             num_samples=mc_samples,
         )
 
-        acq = FeasibilityWeightedMESMO(mesmo_acq=mesmo, constraint_model=c_model, threshold=0.0)
-
+        acq = mesmo
         
 
         # determine batch size for this round 
