@@ -143,9 +143,14 @@ This repository integrates several existing benchmark problem suites:
 All third-party licenses are preserved in their respective directories.
 
 
-## References
+## Acknowledgements
 
-- OpenRadioss: https://openradioss.org/
-- Mazda CdMOBP Benchmark: https://ladse.eng.isas.jaxa.jp/benchmark/
-- MECHBench: https://github.com/BayesOptApp/MECHBench
-- SBArchOpt: https://sbarchopt.readthedocs.io/
+This benchmark suite incorporates and extends several existing benchmark problems and open-source software projects. We gratefully acknowledge the developers and maintainers of the following resources:
+
+- [MECHBench](https://github.com/BayesOptApp/MECHBench) 
+- [SBArchOpt](https://sbarchopt.readthedocs.io/)
+- [Mazda CdMOBP Benchmark](https://ladse.eng.isas.jaxa.jp/benchmark/)
+- [pymoo](https://pymoo.org/)
+- [Botorch](https://botorch.org/)
+- [EGBO](https://github.com/Kedar-Materials-by-Design-Lab/Constrained-Multi-Objective-Optimization-for-Materials-Discovery)
+- [OpenRadioss](https://openradioss.org/)
