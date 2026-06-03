@@ -2,8 +2,6 @@
 __pycache__/
 *.pyc
 
-# # results
-# results/
 
 # VS Code
 .vscode/
@@ -12,5 +10,4 @@ __pycache__/
 .venv/
 
 
-third_party/cfd_suite/Exeter_CFD_Problems/data/
-*.stl
+
