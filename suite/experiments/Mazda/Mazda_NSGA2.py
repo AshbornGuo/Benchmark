@@ -19,7 +19,7 @@ from pymoo.parallelization.joblib import JoblibParallelization
 
 random_seed = 339
 population_size = 50
-num_eval = 1500
+num_eval = 300
 
 
 
